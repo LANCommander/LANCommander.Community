@@ -3,7 +3,7 @@ using LANCommander.Community.Server.RecompCatalog.Infrastructure;
 using LANCommander.SDK.Enums;
 using LANCommander.Server.Plugins;
 
-namespace LANCommander.Community.Server.RecompCatalog.Plugin;
+namespace LANCommander.Community.Server.RecompCatalog;
 
 internal sealed record PreparedImportArtifact(
     NormalizedArtifact Artifact,

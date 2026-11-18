@@ -1,11 +1,15 @@
 using System.Reflection;
+using System.IO.Compression;
+using System.Runtime.Loader;
 using LANCommander.Community.Server.RecompCatalog.Core;
 using LANCommander.Community.Server.RecompCatalog.Infrastructure;
 using LANCommander.Community.Server.RecompCatalog.Providers;
-using LANCommander.Community.Server.RecompCatalog.Plugin;
+using LANCommander.Community.Server.RecompCatalog;
 using LANCommander.SDK.Enums;
 using LANCommander.SDK.Plugins;
 using LANCommander.Server.Plugins;
+using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.DependencyInjection;
 using ManifestGame = LANCommander.SDK.Models.Manifest.Game;
 using ManifestGenre = LANCommander.SDK.Models.Manifest.Genre;
 
@@ -14,6 +18,60 @@ namespace LANCommander.Community.Server.RecompCatalog.Tests;
 /// <summary>Exercises the plugin's host adapters against the published LANCommander.Server.Plugins contracts.</summary>
 public class HostContractTests
 {
+    [Fact]
+    public void LoadsCanonicalEntryAssemblyWithSharedHostContracts()
+    {
+        var context = new PackageLoadContext(Environment.GetEnvironmentVariable("RECOMPCATALOG_TEST_PACKAGE"));
+        try
+        {
+            var assembly = context.LoadPrivateAssembly("LANCommander.Community.Server.RecompCatalog");
+            Assert.NotSame(typeof(RecompCatalogPlugin).Assembly, assembly);
+            Assert.Equal("LANCommander.Community.Server.RecompCatalog", assembly.GetName().Name);
+            var attribute = assembly.GetCustomAttribute<LANCommanderPluginAttribute>();
+            Assert.NotNull(attribute);
+            Assert.Equal(PluginHost.Server, attribute.Hosts);
+            var pluginType = Assert.Single(assembly.GetTypes(),
+                type => typeof(IPlugin).IsAssignableFrom(type) && !type.IsAbstract);
+            var plugin = Assert.IsAssignableFrom<IPlugin>(Activator.CreateInstance(pluginType));
+            Assert.Equal("dev.aaronpowell.lancommander.recompcatalog", plugin.Id);
+            var services = new ServiceCollection();
+            plugin.ConfigureServices(services);
+            using var provider = services.BuildServiceProvider();
+            Assert.Equal("/Plugins/RecompCatalog",
+                Assert.Single(provider.GetServices<IServerNavigationExtension>()).Href);
+            var page = Assert.Single(assembly.GetTypes(), type => typeof(ComponentBase).IsAssignableFrom(type)
+                && type.GetCustomAttribute<RouteAttribute>()?.Template == "/Plugins/RecompCatalog");
+            Assert.Equal(PluginAccessPolicy.Administrator,
+                page.GetCustomAttribute<PluginAccessAttribute>()!.Policy);
+        }
+        finally { context.Unload(); }
+    }
+
+    private sealed class PackageLoadContext(string? packagePath) : AssemblyLoadContext(isCollectible: true)
+    {
+        public Assembly LoadPrivateAssembly(string name)
+        {
+            using var archive = packagePath is null ? null : ZipFile.OpenRead(packagePath);
+            using var stream = archive is null
+                ? File.OpenRead(Path.Combine(Path.GetDirectoryName(typeof(RecompCatalogPlugin).Assembly.Location)!, $"{name}.dll"))
+                : (archive.GetEntry($"lib/net10.0/{name}.dll")
+                    ?? throw new InvalidDataException($"Missing packaged private assembly {name}.")).Open();
+            using var assemblyBytes = new MemoryStream();
+            stream.CopyTo(assemblyBytes);
+            assemblyBytes.Position = 0;
+            return LoadFromStream(assemblyBytes);
+        }
+
+        protected override Assembly? Load(AssemblyName name)
+        {
+            if (name.Name is null) return null;
+            if (name.Name == "LANCommander.Community.Server.RecompCatalog"
+                || name.Name.StartsWith("LANCommander.Community.Server.RecompCatalog.", StringComparison.Ordinal))
+                return LoadPrivateAssembly(name.Name);
+            return Default.LoadFromAssemblyName(name);
+        }
+    }
+
     [Fact]
     public void DeclaresMinimumHostVersionForPublishedContracts()
     {

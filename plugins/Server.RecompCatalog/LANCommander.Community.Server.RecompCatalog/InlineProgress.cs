@@ -1,4 +1,4 @@
-namespace LANCommander.Community.Server.RecompCatalog.Plugin;
+namespace LANCommander.Community.Server.RecompCatalog;
 
 // Progress<T> posts reports asynchronously, so a late report could overwrite a final status message.
 internal sealed class InlineProgress<T>(Action<T> report) : IProgress<T>

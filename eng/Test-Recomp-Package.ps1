@@ -8,11 +8,11 @@ $ErrorActionPreference = 'Stop'
 $package = Get-Item -LiteralPath $PackagePath
 $archive = [System.IO.Compression.ZipFile]::OpenRead($package.FullName)
 try {
-    $packageId = 'LANCommander.Community.Server.RecompCatalog.Plugin'
+    $packageId = 'LANCommander.Community.Server.RecompCatalog'
     $expected = @(
         'LANCommander.Community.Server.RecompCatalog.Core.dll',
         'LANCommander.Community.Server.RecompCatalog.Infrastructure.dll',
-        'LANCommander.Community.Server.RecompCatalog.Plugin.dll',
+        'LANCommander.Community.Server.RecompCatalog.dll',
         'LANCommander.Community.Server.RecompCatalog.Providers.dll'
     ) | ForEach-Object { "lib/net10.0/$_" }
     $actual = @($archive.Entries | Where-Object { $_.FullName.StartsWith('lib/') -and $_.Name } |
@@ -24,7 +24,7 @@ try {
     foreach ($assemblyName in @(
         'LANCommander.Community.Server.RecompCatalog.Core',
         'LANCommander.Community.Server.RecompCatalog.Infrastructure',
-        'LANCommander.Community.Server.RecompCatalog.Plugin',
+        'LANCommander.Community.Server.RecompCatalog',
         'LANCommander.Community.Server.RecompCatalog.Providers'
     )) {
         $entry = $archive.GetEntry("lib/net10.0/$assemblyName.dll")
@@ -65,4 +65,15 @@ try {
 }
 finally {
     $archive.Dispose()
+}
+
+$previousPackage = $env:RECOMPCATALOG_TEST_PACKAGE
+try {
+    $env:RECOMPCATALOG_TEST_PACKAGE = $package.FullName
+    & dotnet test (Join-Path $PSScriptRoot '../plugins/Server.RecompCatalog/LANCommander.Community.Server.RecompCatalog.Tests/LANCommander.Community.Server.RecompCatalog.Tests.csproj') `
+        -c Release --nologo --filter 'FullyQualifiedName~LoadsCanonicalEntryAssemblyWithSharedHostContracts'
+    if ($LASTEXITCODE -ne 0) { throw 'Packaged Recomp Catalog loader contract check failed.' }
+}
+finally {
+    $env:RECOMPCATALOG_TEST_PACKAGE = $previousPackage
 }

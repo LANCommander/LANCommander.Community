@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.3
+
+- Link package/project metadata to the transferred
+  `LANCommander/LANCommander.Community` repository. The canonical project,
+  package and assembly name remains `LANCommander.Community.Server.Mcp`.
+- Keep the published 0.2.2 package immutable; runtime plugin ID and host
+  compatibility are unchanged.
+- Exercise the isolated host loader and HTTP contracts against the extracted
+  NuGet payload as well as local build output.
+
 ## 0.2.2
 
 - Update host packages and minimum host version to LANCommander 2.2.0-beta.4.

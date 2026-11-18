@@ -55,7 +55,7 @@ public sealed class PluginLoadContextTests
         var pluginDirectory = Path.GetDirectoryName(pluginPath!)!;
 
         Assert.NotNull(manifest);
-        Assert.Equal("LANCommander.Community.Launcher.MQTT.Plugin", pluginAssembly.GetName().Name);
+        Assert.Equal("LANCommander.Community.Launcher.MQTT", pluginAssembly.GetName().Name);
         Assert.Equal("2.2.0-beta.4", manifest.MinHostVersion);
         Assert.Equal("2.2.0-beta.4", manifest.MaxHostVersion);
         Assert.True(typeof(IPlugin).IsAssignableFrom(manifest!.EntryPoint));
@@ -96,7 +96,7 @@ public sealed class PluginLoadContextTests
             new[]
             {
                 "LANCommander.Community.Launcher.MQTT.Core.dll",
-                "LANCommander.Community.Launcher.MQTT.Plugin.dll",
+                "LANCommander.Community.Launcher.MQTT.dll",
                 "LANCommander.Community.Launcher.MQTT.Transport.dll",
                 "MQTTnet.dll"
             },

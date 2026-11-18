@@ -9,6 +9,17 @@ Create focused, discoverable guidance for a recurring repository task. Keep
 the repository's canonical docs and scripts as the source of truth; a skill
 should route an agent to them, not copy a long procedure that will drift.
 
+## Existing task boundaries
+
+- [Server plugin creation](../create-server-plugin/SKILL.md): new server components.
+- [Launcher plugin creation](../create-launcher-plugin/SKILL.md): new launcher components.
+- [Plugin maintenance](../plugin-maintenance/SKILL.md): changes to existing components.
+- [Plugin release preparation](../plugin-release/SKILL.md): validation and release gates.
+
+Skills are discovered from `.github/skills/<name>/SKILL.md`; there is no separate
+skill registry. Link new skills from the relevant guides and
+[CONTRIBUTING.md](../../../CONTRIBUTING.md).
+
 ## Authoring workflow
 
 1. Choose one task boundary and a short kebab-case directory name under

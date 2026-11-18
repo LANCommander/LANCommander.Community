@@ -13,10 +13,10 @@ support it.
 
 - Canonical component metadata is in `eng/plugins.json`; release versions live
   in each component's `version.txt` and changelog.
-- Use `LANCommander.Community.Server.Mcp`,
-  `LANCommander.Community.Server.RecompCatalog.*`, and
-  `LANCommander.Community.Launcher.MQTT.*` for project names, paths, and C#
-  namespaces. Use exact `LANCommander` casing for source-owned names.
+- Use `LANCommander.Community.<Server|Launcher>.<Name>` for the installable
+  project, package, assembly and root namespace, with no `.Plugin` suffix.
+  Helpers/tests append suffixes to that root and stay non-packable. Use exact
+  `LANCommander` casing for source-owned names.
 - Set each owned `AssemblyName` and `PackageId` to the exact current project
   name with `LANCommander` casing; do not keep legacy pre-monorepo names as
   active build or package outputs. Preserve semantic plugin IDs, persisted/config
@@ -69,3 +69,6 @@ support it.
 For release preparation and automatic GitHub Release behavior, follow
 [`RELEASES.md`](../../../RELEASES.md) and the
 [`plugin-release` skill](../plugin-release/SKILL.md).
+
+For new components, start with [server creation](../create-server-plugin/SKILL.md)
+or [launcher creation](../create-launcher-plugin/SKILL.md).

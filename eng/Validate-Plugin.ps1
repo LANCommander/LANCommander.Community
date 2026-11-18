@@ -20,7 +20,7 @@ if ($Plugin -eq 'Launcher.MQTT') {
     $hostSource = Join-Path $repositoryRoot '.cache/lancommander-beta4'
     & (Join-Path $PSScriptRoot 'Prepare-LANCommanderSource.ps1') -Destination $hostSource | Out-Null
     $env:LANCOMMANDER_SOURCE_ROOT = $hostSource
-    $env:LANCOMMANDER_MQTT_PLUGIN_PATH = Join-Path $repositoryRoot 'plugins/Launcher.MQTT/src/LANCommander.Community.Launcher.MQTT.Plugin/bin/Release/net10.0/plugin-package/LANCommander.Community.Launcher.MQTT.Plugin.dll'
+    $env:LANCOMMANDER_MQTT_PLUGIN_PATH = Join-Path $repositoryRoot 'plugins/Launcher.MQTT/src/LANCommander.Community.Launcher.MQTT/bin/Release/net10.0/plugin-package/LANCommander.Community.Launcher.MQTT.dll'
     $env:LANCOMMANDER_HA_TEMPLATE_EXPORT = Join-Path ([IO.Path]::GetTempPath()) "lancommander-ha-discovery-$PID.json"
 }
 
@@ -59,8 +59,8 @@ if ($Plugin -eq 'Launcher.MQTT') {
             PlanOnly = $true
         }
         if ($publisher -eq 'Publish-GitHubPackage.ps1') {
-            $arguments.Owner = 'aaronpowell'
-            $arguments.Repository = 'aaronpowell/LANCommander.Community'
+            $arguments.Owner = 'LANCommander'
+            $arguments.Repository = 'LANCommander/LANCommander.Community'
         }
         $output = & (Join-Path $PSScriptRoot $publisher) @arguments
         $plans = @($output | Where-Object { $_ -match '^\{"component"' })

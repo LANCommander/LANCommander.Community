@@ -16,6 +16,10 @@ foreach ($plugin in $plugins) {
     $packageId = $pluginProjectXml.Project.PropertyGroup.PackageId
     $rootNamespace = $pluginProjectXml.Project.PropertyGroup.RootNamespace
     $projectName = [IO.Path]::GetFileNameWithoutExtension($plugin.project)
+    $componentName = "LANCommander.Community.$($plugin.key)"
+    if ($rootNamespace -cne $componentName) {
+        throw "$($plugin.key) entry project and root namespace must be '$componentName' (no .Plugin suffix)."
+    }
     if ($plugin.assemblyName -cne $projectName -or $assemblyName -cne $projectName -or
         $plugin.packageId -cne $projectName -or $packageId -cne $projectName) {
         throw "$($plugin.key) assembly and package IDs must match its project name '$projectName'."
@@ -49,7 +53,7 @@ foreach ($plugin in $plugins) {
         throw "$($plugin.key) package-feed eligibility must be explicit bools and only nupkg artifacts may be eligible."
     }
     if (($plugin.githubPackagesEligible -or $plugin.nugetOrgEligible) -and
-        [string]$pluginProjectXml.Project.PropertyGroup.RepositoryUrl -cne 'https://github.com/aaronpowell/LANCommander.Community') {
+        [string]$pluginProjectXml.Project.PropertyGroup.RepositoryUrl -cne 'https://github.com/LANCommander/LANCommander.Community') {
         throw "$($plugin.key) must link package feeds to the canonical LANCommander.Community repository."
     }
 }
@@ -60,6 +64,18 @@ foreach ($project in $allProjects) {
     $projectName = [IO.Path]::GetFileNameWithoutExtension($project.Name)
     $assemblyName = [string]$projectXml.Project.PropertyGroup.AssemblyName
     $packageId = [string]$projectXml.Project.PropertyGroup.PackageId
+    $relative = [IO.Path]::GetRelativePath((Join-Path $repositoryRoot 'plugins'), $project.FullName)
+    $componentKey = ($relative -split '[/\\]')[0]
+    $component = @($plugins | Where-Object key -CEQ $componentKey)
+    $componentRoot = "LANCommander.Community.$componentKey"
+    if ($component.Count -ne 1 -or
+        ($projectName -cne $componentRoot -and -not $projectName.StartsWith("$componentRoot.", [StringComparison]::Ordinal)) -or
+        [string]$projectXml.Project.PropertyGroup.RootNamespace -cne $projectName) {
+        throw "Project '$($project.FullName)' must use its registered component root and matching namespace."
+    }
+    if ($projectName -cne $componentRoot -and $projectXml.Project.PropertyGroup.IsPackable -eq 'true') {
+        throw "Helper/test project '$projectName' must not be packable."
+    }
     if ($assemblyName -and $assemblyName -cne $projectName) {
         throw "Project '$($project.FullName)' overrides AssemblyName '$assemblyName'; expected '$projectName'."
     }
@@ -82,13 +98,13 @@ foreach ($path in $requiredFiles) {
     }
 }
 
-$example = Get-Content -LiteralPath (Join-Path $repositoryRoot 'plugins/Launcher.MQTT/src/LANCommander.Community.Launcher.MQTT.Plugin/homeassistant.example.json') -Raw |
+$example = Get-Content -LiteralPath (Join-Path $repositoryRoot 'plugins/Launcher.MQTT/src/LANCommander.Community.Launcher.MQTT/homeassistant.example.json') -Raw |
     ConvertFrom-Json
 if ($example.BrokerUsername -or $example.BrokerPassword -or $example.UseTls) {
     throw 'The launcher example must contain blank credentials and retain the plaintext default.'
 }
 
-$launcherIds = Get-Content -LiteralPath (Join-Path $repositoryRoot 'plugins/Launcher.MQTT/src/LANCommander.Community.Launcher.MQTT.Plugin/HomeAssistantLauncherPlugin.cs') -Raw
+$launcherIds = Get-Content -LiteralPath (Join-Path $repositoryRoot 'plugins/Launcher.MQTT/src/LANCommander.Community.Launcher.MQTT/HomeAssistantLauncherPlugin.cs') -Raw
 if ($launcherIds -notmatch 'Id = "com\.aaronpowell\.lancommander\.homeassistant"') {
     throw 'The existing launcher plugin ID changed.'
 }
@@ -96,7 +112,7 @@ $mcpIds = Get-Content -LiteralPath (Join-Path $repositoryRoot 'plugins/Server.Mc
 if ($mcpIds -notmatch 'io\.github\.aaronpowell\.lancommander\.mcp') {
     throw 'The existing MCP plugin ID changed.'
 }
-$recompIds = Get-Content -LiteralPath (Join-Path $repositoryRoot 'plugins/Server.RecompCatalog/LANCommander.Community.Server.RecompCatalog.Plugin/RecompCatalogPlugin.cs') -Raw
+$recompIds = Get-Content -LiteralPath (Join-Path $repositoryRoot 'plugins/Server.RecompCatalog/LANCommander.Community.Server.RecompCatalog/RecompCatalogPlugin.cs') -Raw
 if ($recompIds -notmatch 'dev\.aaronpowell\.lancommander\.recompcatalog') {
     throw 'The existing Recomp Catalog plugin ID changed.'
 }
@@ -117,4 +133,21 @@ if ($trackedConfigs.Count -gt 0) {
     throw 'A populated launcher homeassistant.json must not be tracked; only the blank example belongs in source control.'
 }
 
-Write-Output "Repository checks passed for $($plugins.Count) components."
+$skills = @(Get-ChildItem -LiteralPath (Join-Path $repositoryRoot '.github/skills') -Filter SKILL.md -Recurse -File)
+foreach ($skill in $skills) {
+    $content = Get-Content -LiteralPath $skill.FullName -Raw
+    $frontmatter = [regex]::Match($content, '\A---\r?\nname: (?<name>[a-z0-9-]+)\r?\ndescription: (?<description>[^\r\n]+)\r?\n---(?:\r?\n|$)')
+    if (-not $frontmatter.Success -or $frontmatter.Groups['name'].Value -cne $skill.Directory.Name -or
+        $frontmatter.Groups['description'].Value -notmatch '^Use when ') {
+        throw "Skill '$($skill.FullName)' requires matching name and a 'Use when' description in YAML frontmatter."
+    }
+    foreach ($link in [regex]::Matches($content, '\[[^\]]+\]\((?<target>[^)]+)\)')) {
+        $target = $link.Groups['target'].Value
+        if ($target -match '^(https?://|#)') { continue }
+        $relativePath = ($target -split '#', 2)[0]
+        if (-not (Test-Path -LiteralPath (Join-Path $skill.Directory.FullName $relativePath))) {
+            throw "Skill '$($skill.Name)' in '$($skill.Directory.Name)' has a broken link: $target"
+        }
+    }
+}
+Write-Output "Repository checks passed for $($plugins.Count) components and $($skills.Count) skills."

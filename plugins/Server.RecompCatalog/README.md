@@ -39,11 +39,11 @@ LANCommander server build that carries the plugin contracts described under
 [Build](#build) and the [host load-context prerequisite](#host-load-context-prerequisite).
 
 1. Download the NuGet package and its `.sha256` file from the
-   [community releases page](https://github.com/aaronpowell/LANCommander.Community/releases), and
+   [community releases page](https://github.com/LANCommander/LANCommander.Community/releases), and
    verify the hash:
 
    ```powershell
-   $package = 'LANCommander.Community.Server.RecompCatalog.Plugin.0.4.3.nupkg'
+   $package = 'LANCommander.Community.Server.RecompCatalog.0.4.4.nupkg'
    $expected = (Get-Content "$package.sha256").Split(' ')[0]
    (Get-FileHash $package -Algorithm SHA256).Hash.ToLowerInvariant() -eq $expected
    ```
@@ -81,7 +81,7 @@ Standard `dotnet pack` also produces the same package layout; the script adds va
 checksum. Host assemblies are compile-time references, not bundled dependencies.
 
 ```powershell
-dotnet pack .\plugins\Server.RecompCatalog\LANCommander.Community.Server.RecompCatalog.Plugin\LANCommander.Community.Server.RecompCatalog.Plugin.csproj -c Release -o artifacts
+dotnet pack .\plugins\Server.RecompCatalog\LANCommander.Community.Server.RecompCatalog\LANCommander.Community.Server.RecompCatalog.csproj -c Release -o artifacts
 ```
 
 Pull request CI validates all components. A component tag publishes this
@@ -108,7 +108,7 @@ dotnet test .\plugins\Server.RecompCatalog\LANCommander.Community.Server.RecompC
 
 ## Server plugin
 
-`LANCommander.Community.Server.RecompCatalog.Plugin` is the server-side plugin. It registers an
+`LANCommander.Community.Server.RecompCatalog` is the server-side plugin. It registers an
 `IServerRouteAssemblyExtension` and an `IServerNavigationExtension`, and serves an
 administrator-only catalog browser at `/Plugins/RecompCatalog`.
 
@@ -268,11 +268,31 @@ never writes game/archive rows directly. The imported package carries the
 catalog identity, exact release identity, and serialized update policy so later catalog refreshes
 can classify existing games without title matching.
 
-When replacing an earlier manual install, stop the server, remove the old
-`Plugins\LANCommander.RecompCatalog.Plugin` folder, and install the new package
-or complete output under `Plugins\LANCommander.Community.Server.RecompCatalog.Plugin`.
-Imported games, archives, and package scripts live in LANCommander's data store,
-not the plugin folder; keep the same plugin ID when replacing the plugin.
+### Replacing the old package identity (0.4.4)
+
+`LANCommander.Community.Server.RecompCatalog.Plugin` 0.4.2 and 0.4.3 were
+published. They and their tags/assets remain immutable. Version 0.4.4 uses the
+new feed ID `LANCommander.Community.Server.RecompCatalog`; package managers
+do not discover it as a newer version of the old ID.
+
+Stop the server and securely back up the old plugin directory outside `Plugins`,
+including any `Data` directory. Remove the old
+`Plugins\LANCommander.Community.Server.RecompCatalog.Plugin` directory (or
+`Plugins\LANCommander.RecompCatalog.Plugin` for older manual installs), then
+install the new package through **Settings > Plugins** and stop the server
+again before activation. Restore any saved `Data` to
+`Plugins\LANCommander.Community.Server.RecompCatalog\Data`, reconciling conflicts
+rather than overwriting them. For manual installation, extract only
+`lib/net10.0` contents into the new plugin directory.
+Never leave both old and new entry DLLs/directories installed: they declare
+the same runtime plugin ID. Restart and confirm a single Recomp Catalog plugin.
+For rollback, stop the server and restore the old directory/backup instead of
+loading both.
+
+The semantic plugin ID, configuration keys, deterministic catalog/game/ROM IDs
+and custom fields are unchanged. Imported games, archives and package scripts
+live in LANCommander's data store, not the plugin folder. No data migration or
+automatic cross-package upgrade is introduced.
 
 The host packages (`LANCommander.SDK`, `LANCommander.Server.Plugins`, and
 `LANCommander.Server.UI`) are referenced with `ExcludeAssets="runtime"` and `PrivateAssets="all"`,

@@ -2,7 +2,7 @@ using System.IO.Compression;
 using System.Security.Cryptography;
 using LANCommander.Community.Server.RecompCatalog.Core;
 using LANCommander.Community.Server.RecompCatalog.Infrastructure;
-using LANCommander.Community.Server.RecompCatalog.Plugin;
+using LANCommander.Community.Server.RecompCatalog;
 using LANCommander.SDK.Enums;
 using LANCommander.SDK.Helpers;
 using LANCommander.SDK.Models.Manifest;

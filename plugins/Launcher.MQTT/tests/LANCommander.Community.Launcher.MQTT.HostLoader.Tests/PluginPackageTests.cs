@@ -26,7 +26,7 @@ public sealed class PluginPackageTests
         var search = await feeds.SearchAsync("", PluginPackageTypes.Launcher);
         Assert.Empty(search.Errors);
         var listed = Assert.Single(search.Packages);
-        Assert.Equal("LANCommander.Community.Launcher.MQTT.Plugin", listed.Id);
+        Assert.Equal("LANCommander.Community.Launcher.MQTT", listed.Id);
         Assert.Equal(expectedVersion, listed.Version);
         Assert.Empty((await feeds.SearchAsync("", PluginPackageTypes.Server)).Packages);
         var staging = new PluginStaging(root, Path.Combine(root, ".staging"));

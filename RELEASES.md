@@ -18,9 +18,9 @@ metadata when changing a component.
 | Component key | Version file | Changelog | Tag format | GitHub Release asset | NuGet feeds |
 | --- | --- | --- | --- | --- | --- |
 | `Server.Mcp` | `plugins/Server.Mcp/version.txt` | `plugins/Server.Mcp/CHANGELOG.md` | `server-mcp-v<version>` | `LANCommander.Community.Server.Mcp.<version>.nupkg` | GitHub Packages; NuGet.org if `NUGET_API_KEY` is set |
-| `Server.RecompCatalog` | `plugins/Server.RecompCatalog/version.txt` | `plugins/Server.RecompCatalog/CHANGELOG.md` | `server-recompcatalog-v<version>` | `LANCommander.Community.Server.RecompCatalog.Plugin.<version>.nupkg` | GitHub Packages; NuGet.org if `NUGET_API_KEY` is set |
+| `Server.RecompCatalog` | `plugins/Server.RecompCatalog/version.txt` | `plugins/Server.RecompCatalog/CHANGELOG.md` | `server-recompcatalog-v<version>` | `LANCommander.Community.Server.RecompCatalog.<version>.nupkg` | GitHub Packages; NuGet.org if `NUGET_API_KEY` is set |
 | `Server.Quake3` | `plugins/Server.Quake3/version.txt` | `plugins/Server.Quake3/CHANGELOG.md` | `server-quake3-v<version>` | `LANCommander.Community.Server.Quake3.<version>.nupkg` | GitHub Packages; NuGet.org if `NUGET_API_KEY` is set |
-| `Launcher.MQTT` | `plugins/Launcher.MQTT/version.txt` | `plugins/Launcher.MQTT/CHANGELOG.md` | `launcher-mqtt-v<version>` | `LANCommander.Community.Launcher.MQTT.Plugin.<version>.nupkg` | GitHub Packages; NuGet.org if `NUGET_API_KEY` is set |
+| `Launcher.MQTT` | `plugins/Launcher.MQTT/version.txt` | `plugins/Launcher.MQTT/CHANGELOG.md` | `launcher-mqtt-v<version>` | `LANCommander.Community.Launcher.MQTT.<version>.nupkg` | GitHub Packages; NuGet.org if `NUGET_API_KEY` is set |
 
 Use complete SemVer in `version.txt`, including prerelease identifiers when
 applicable. The tag must contain that exact version, and the changelog must
@@ -28,6 +28,33 @@ have a non-empty `## <version>` section. Never reuse a released version or
 replace a published release asset; choose a new version and matching changelog
 entry for subsequent changes. Values in the files alone do not mean a version
 has been published.
+
+### Package identity normalization
+
+The next RecompCatalog release is 0.4.4 under
+`LANCommander.Community.Server.RecompCatalog`; the next MQTT release is 0.2.2
+under `LANCommander.Community.Launcher.MQTT`. The published
+`LANCommander.Community.Server.RecompCatalog.Plugin` 0.4.2/0.4.3 packages and
+`LANCommander.Community.Launcher.MQTT.Plugin` 0.2.1 package (plus the 0.2.0 ZIP)
+remain immutable, including their tags/assets. These are **new feed identities**,
+not new versions of the old IDs; no feed redirect or automatic installed-folder
+migration is implemented. Follow the [RecompCatalog replacement guide](plugins/Server.RecompCatalog/README.md#replacing-the-old-package-identity-044)
+or [MQTT replacement guide](plugins/Launcher.MQTT/README.md#install--upgrade)
+to back up data, remove the old entry assembly and transfer `Data` while stopped.
+Never install both identities concurrently: their semantic plugin IDs stay
+unchanged, as do configuration and persistent data/protocol IDs.
+
+After review/merge, release only the new versions through the normal tag gates.
+Scope any NuGet.org key to the new canonical IDs in the table; maintainers must
+check availability/access for each new feed identity. The repository has moved
+to `LANCommander/LANCommander.Community`; old package ownership/feed visibility
+is not assumed to transfer or redirect. Nothing here republishes or deletes an
+old package, configures a feed, or authorizes a release.
+
+MCP 0.2.3 and Quake3 0.1.0-beta.2 retain their existing canonical package IDs
+and normal same-ID upgrade paths. Their versions advance only because the
+canonical repository metadata changes; published MCP 0.2.2 and Quake3
+0.1.0-beta.1 must not be rebuilt and republished with that change.
 
 All current components target LANCommander `2.2.0-beta.4`. Server components
 use the matching published NuGet packages. Launcher.MQTT is source-coupled to
@@ -94,8 +121,8 @@ runtime exclusions and loader-identity checks.
    `version.txt`:
 
    ```powershell
-   git tag -a server-mcp-v0.2.2 -m "Server.Mcp 0.2.2" <reviewed-main-commit>
-   git push origin server-mcp-v0.2.2
+   git tag -a server-mcp-v0.2.3 -m "Server.Mcp 0.2.3" <reviewed-main-commit>
+   git push origin server-mcp-v0.2.3
    ```
 
    The example is illustrative; check the current version file and release
@@ -113,7 +140,7 @@ existing tag, component version, and `main` ancestry and then uses the normal
 build, release, and feed jobs. Do not move or recreate the tag. For example:
 
 ```powershell
-gh workflow run release.yml --repo aaronpowell/LANCommander.Community --ref main -f tag=server-mcp-v0.2.2
+gh workflow run release.yml --repo LANCommander/LANCommander.Community --ref main -f tag=server-mcp-v0.2.3
 ```
 
 For a run that successfully built the package but failed later, pass that run's
@@ -122,7 +149,7 @@ This matters when the GitHub Release already exists: changed rebuild bytes are
 rejected by immutable release checks. Example:
 
 ```powershell
-gh workflow run release.yml --repo aaronpowell/LANCommander.Community --ref main `
+gh workflow run release.yml --repo LANCommander/LANCommander.Community --ref main `
   -f tag=server-mcp-v0.2.1 -f artifact_run_id=<original-run-id> -f artifact_run_attempt=1
 ```
 
@@ -176,9 +203,9 @@ IDs, give it an expiry, and store it as the repository Actions secret named
 `NUGET_API_KEY`:
 
 - `LANCommander.Community.Server.Mcp`
-- `LANCommander.Community.Server.RecompCatalog.Plugin`
+- `LANCommander.Community.Server.RecompCatalog`
 - `LANCommander.Community.Server.Quake3`
-- `LANCommander.Community.Launcher.MQTT.Plugin`
+- `LANCommander.Community.Launcher.MQTT`
 
 Do not use a personal account-wide key or commit the secret. No API key,
 NuGet.org account, trusted publisher, or external service is configured by
@@ -196,7 +223,7 @@ The NuGet.org publisher has
 `contents: read` and receives the optional API key only for its push step. The
 GitHub Release job has `contents: write`.
 `RepositoryUrl` in the plugin packages points to
-`https://github.com/aaronpowell/LANCommander.Community`, linking packages to
+`https://github.com/LANCommander/LANCommander.Community`, linking packages to
 the repository. After a first authorized GitHub Packages publication,
 maintainers should review package visibility and repository access settings;
 new packages may default to private, and public distribution must be

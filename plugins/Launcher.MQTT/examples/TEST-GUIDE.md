@@ -1,4 +1,4 @@
-# Launcher test package 0.2.1
+# Launcher test package 0.2.2
 
 Actual Windows GUI Launcher plugin targeting **LANCommander v2.2.0-beta.4**,
 source commit `675befe0673c03aded2b45995694661ce454ba95`, .NET 10.
@@ -8,26 +8,28 @@ Its new GUI and real install workflow still require your smoke test.
 
 ## Install / upgrade
 
-1. For an existing ZIP install, exit the Launcher and follow the
+1. For an existing ZIP or `.Plugin` NuGet install, exit the Launcher and follow the
    [README migration steps](../README.md#install--upgrade) **before** installing
    the NuGet package. Back up settings and journal securely outside `Plugins`,
-   then move them to `Data` within the normalized plugin folder. The host
-   updater cannot preserve root files; uninstall deletes `Data` as well.
+   prepare legacy root files in the old folder's `Data`, and transfer the saved
+   `Data` into the new canonical folder after replacement. Remove old entry
+   assemblies; never load both identities. The host updater does not transfer
+   data across package IDs or preserve root files; uninstall deletes `Data` too.
 2. Locate the existing Launcher **data/config root**, not just the executable
    directory. `LANCOMMANDER_DATA_DIR`, if set, is the exact root; otherwise it is
    normally `Data` beneath the Launcher's working directory. Protected locations
    can use local application data instead. Use the existing configuration/DB root.
 3. Use the Launcher's plugin manager to install
-   `LANCommander.Community.Launcher.MQTT.Plugin.0.2.1.nupkg` from a local file
+   `LANCommander.Community.Launcher.MQTT.0.2.2.nupkg` from a local file
    or configured feed, and restart to apply the staged install. The resulting
    layout is:
 
    ```text
    <Launcher data root>\
      Plugins\
-       LANCommander.Community.Launcher.MQTT.Plugin\
-         LANCommander.Community.Launcher.MQTT.Plugin.dll
-         LANCommander.Community.Launcher.MQTT.Plugin.deps.json
+       LANCommander.Community.Launcher.MQTT\
+         LANCommander.Community.Launcher.MQTT.dll
+         LANCommander.Community.Launcher.MQTT.deps.json
          LANCommander.Community.Launcher.MQTT.Core.dll
          LANCommander.Community.Launcher.MQTT.Transport.dll
          MQTTnet.dll

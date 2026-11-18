@@ -98,3 +98,17 @@ try {
 finally {
     $archive.Dispose()
 }
+
+$temporary = Join-Path ([IO.Path]::GetTempPath()) "mcp-package-$([Guid]::NewGuid().ToString('N'))"
+$previousPlugin = $env:LANCOMMANDER_MCP_PLUGIN_PATH
+try {
+    [IO.Compression.ZipFile]::ExtractToDirectory($package.FullName, $temporary)
+    $env:LANCOMMANDER_MCP_PLUGIN_PATH = Join-Path $temporary 'lib/net10.0/LANCommander.Community.Server.Mcp.dll'
+    & dotnet test (Join-Path $PSScriptRoot '../tests/LANCommander.Community.Server.Mcp.Tests/LANCommander.Community.Server.Mcp.Tests.csproj') `
+        -c Release --nologo --filter 'FullyQualifiedName~McpHttpTests'
+    if ($LASTEXITCODE -ne 0) { throw 'Packaged MCP loader/HTTP contract checks failed.' }
+}
+finally {
+    $env:LANCOMMANDER_MCP_PLUGIN_PATH = $previousPlugin
+    if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Recurse -Force }
+}

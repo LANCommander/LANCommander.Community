@@ -3,5 +3,5 @@
   <Project Path="LANCommander.Community.Server.RecompCatalog.Infrastructure/LANCommander.Community.Server.RecompCatalog.Infrastructure.csproj" />
   <Project Path="LANCommander.Community.Server.RecompCatalog.Providers/LANCommander.Community.Server.RecompCatalog.Providers.csproj" />
   <Project Path="LANCommander.Community.Server.RecompCatalog.Tests/LANCommander.Community.Server.RecompCatalog.Tests.csproj" />
-  <Project Path="LANCommander.Community.Server.RecompCatalog.Plugin/LANCommander.Community.Server.RecompCatalog.Plugin.csproj" />
+  <Project Path="LANCommander.Community.Server.RecompCatalog/LANCommander.Community.Server.RecompCatalog.csproj" />
 </Solution>

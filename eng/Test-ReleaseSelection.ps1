@@ -16,23 +16,23 @@ function Assert-Fails {
 
 $single = @(Resolve-PluginSelection -Plugins @('Server.Mcp'))
 Assert-Equal 'Server.Mcp' $single[0].key 'Single-component selection'
-Assert-Equal '0.2.2' $single[0].version 'Single-component version'
+Assert-Equal '0.2.3' $single[0].version 'Single-component version'
 
-$tag = @(Resolve-PluginSelection -Tag 'launcher-mqtt-v0.2.1')
+$tag = @(Resolve-PluginSelection -Tag 'launcher-mqtt-v0.2.2')
 Assert-Equal 'Launcher.MQTT' $tag[0].key 'Component-tag selection'
-Assert-Equal '0.2.1' $tag[0].version 'Component-tag SemVer'
+Assert-Equal '0.2.2' $tag[0].version 'Component-tag SemVer'
 
-$quake = @(Resolve-PluginSelection -Tag 'server-quake3-v0.1.0-beta.1')
+$quake = @(Resolve-PluginSelection -Tag 'server-quake3-v0.1.0-beta.2')
 Assert-Equal 'Server.Quake3' $quake[0].key 'Quake component-tag selection'
-Assert-Equal '0.1.0-beta.1' $quake[0].version 'Quake independent prerelease'
+Assert-Equal '0.1.0-beta.2' $quake[0].version 'Quake independent prerelease'
 Assert-Equal 4 @(Get-PluginRegistry).Count 'Complete component registry'
 
 $batch = @(Resolve-PluginSelection -Plugins @('Server.Mcp', 'Server.RecompCatalog', 'Launcher.MQTT'))
 Assert-Equal @('Server.Mcp', 'Server.RecompCatalog', 'Launcher.MQTT') @($batch | ForEach-Object key) 'Coordinated LC batch'
-Assert-Equal @('0.2.2', '0.4.3', '0.2.1') @($batch | ForEach-Object version) 'Independent batch versions'
+Assert-Equal @('0.2.3', '0.4.4', '0.2.2') @($batch | ForEach-Object version) 'Independent batch versions'
 
 $all = @(Resolve-PluginSelection -Plugins @('Server.Mcp', 'Server.RecompCatalog', 'Launcher.MQTT', 'Server.Quake3'))
-Assert-Equal @('0.2.2', '0.4.3', '0.2.1', '0.1.0-beta.1') @($all | ForEach-Object version) 'Four-component independent versions'
+Assert-Equal @('0.2.3', '0.4.4', '0.2.2', '0.1.0-beta.2') @($all | ForEach-Object version) 'Four-component independent versions'
 $quakeMetadata = @(Get-PluginRegistry | Where-Object key -CEQ 'Server.Quake3')[0]
 Assert-Equal '2.2.0-beta.4' $quakeMetadata.minimumHostVersion 'Published Quake host API baseline'
 Assert-Equal '2.2.0-beta.4' $quakeMetadata.hostPackageVersion 'Quake package host baseline'
@@ -54,6 +54,24 @@ Assert-Equal $hostVersion $launcherMetadata.maximumHostVersion 'Exact launcher h
 $sourcePin = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'lancommander-source.json') -Raw | ConvertFrom-Json
 Assert-Equal "v$hostVersion" $sourcePin.tag 'Launcher source tag matches package baseline'
 Assert-Equal '675befe0673c03aded2b45995694661ce454ba95' $sourcePin.commit 'Released beta.4 launcher source'
+
+foreach ($key in @('Server.RecompCatalog', 'Launcher.MQTT')) {
+    $component = @(Get-PluginRegistry | Where-Object key -CEQ $key)[0]
+    foreach ($field in @('project', 'packageId', 'assemblyName', 'rootNamespace')) {
+        $invalid = $component | ConvertTo-Json -Depth 5 | ConvertFrom-Json
+        $invalid.$field = if ($field -eq 'project') {
+            "plugins/$key/LANCommander.Community.$key.Plugin/LANCommander.Community.$key.Plugin.csproj"
+        } else { "LANCommander.Community.$key.Plugin" }
+        Assert-Fails { Assert-PluginComponentIdentity $invalid } "$key rejects legacy $field"
+    }
+    $wrongHost = $component | ConvertTo-Json -Depth 5 | ConvertFrom-Json
+    $wrongHost.host = if ($component.host -ceq 'Server') { 'Launcher' } else { 'Server' }
+    Assert-Fails { Assert-PluginComponentIdentity $wrongHost } "$key rejects mismatched host"
+}
+Assert-Fails { Resolve-PluginSelection -Tag 'server-recompcatalog-v0.4.3' } 'Published old Recomp version cannot select renamed output'
+Assert-Fails { Resolve-PluginSelection -Tag 'launcher-mqtt-v0.2.1' } 'Published old launcher version cannot select renamed output'
+Assert-Fails { Resolve-PluginSelection -Tag 'server-mcp-v0.2.2' } 'Published MCP version cannot select changed metadata'
+Assert-Fails { Resolve-PluginSelection -Tag 'server-quake3-v0.1.0-beta.1' } 'Published Quake version cannot select changed metadata'
 
 foreach ($version in @('1.2.3', '0.3.0-beta.1', '1.2.3-rc.2+build.7')) {
     if (-not (Test-PluginSemVer $version)) { throw "Valid SemVer was rejected: $version" }

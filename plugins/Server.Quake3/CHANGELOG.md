@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.0-beta.2
+
+- Link package metadata to the transferred
+  `LANCommander/LANCommander.Community` repository. The canonical project,
+  package and assembly name remains `LANCommander.Community.Server.Quake3`.
+- Keep the published 0.1.0-beta.1 package immutable; runtime plugin ID,
+  persisted server state and host compatibility are unchanged.
+
 ## 0.1.0-beta.1
 
 - Update host packages and minimum host version to LANCommander 2.2.0-beta.4.

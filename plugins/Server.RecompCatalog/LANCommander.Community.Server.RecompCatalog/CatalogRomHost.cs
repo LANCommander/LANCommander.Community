@@ -4,7 +4,7 @@ using LANCommander.SDK.Enums;
 using LANCommander.Server.Plugins;
 using System.Text.Json;
 
-namespace LANCommander.Community.Server.RecompCatalog.Plugin;
+namespace LANCommander.Community.Server.RecompCatalog;
 
 /// <summary>Host operations for ROM redistributables created by this plugin.</summary>
 public interface ICatalogRomHost

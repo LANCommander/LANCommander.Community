@@ -27,7 +27,7 @@ function New-TestPackage {
     <description>Test package</description>
     <tags>LANCommander plugin server mcp</tags>
     <packageTypes><packageType name="LANCommander.Plugin" /><packageType name="LANCommander.Plugin.Server" /></packageTypes>
-    <repository type="git" url="https://github.com/aaronpowell/LANCommander.Community" />
+    <repository type="git" url="https://github.com/LANCommander/LANCommander.Community" />
   </metadata>
 </package>
 "@
@@ -144,15 +144,15 @@ try {
         throw 'Component releases must provide scoped caller permissions, optional NuGet.org secret forwarding, and exact-artifact main-only recovery dispatch.'
     }
 
-    Assert-ReleaseWorkflowContext -Tag $testTag -Repository 'aaronpowell/LANCommander.Community' `
-        -ExpectedRepository 'aaronpowell/LANCommander.Community' -Actions 'true' `
+    Assert-ReleaseWorkflowContext -Tag $testTag -Repository 'LANCommander/LANCommander.Community' `
+        -ExpectedRepository 'LANCommander/LANCommander.Community' -Actions 'true' `
         -EventName 'push' -Ref "refs/tags/$testTag"
-    Assert-ReleaseWorkflowContext -Tag $testTag -Repository 'aaronpowell/LANCommander.Community' `
-        -ExpectedRepository 'aaronpowell/LANCommander.Community' -Actions 'true' `
+    Assert-ReleaseWorkflowContext -Tag $testTag -Repository 'LANCommander/LANCommander.Community' `
+        -ExpectedRepository 'LANCommander/LANCommander.Community' -Actions 'true' `
         -EventName 'workflow_dispatch' -Ref 'refs/heads/main'
     Assert-Fails {
-        Assert-ReleaseWorkflowContext -Tag $testTag -Repository 'aaronpowell/LANCommander.Community' `
-            -ExpectedRepository 'aaronpowell/LANCommander.Community' -Actions 'true' `
+        Assert-ReleaseWorkflowContext -Tag $testTag -Repository 'LANCommander/LANCommander.Community' `
+            -ExpectedRepository 'LANCommander/LANCommander.Community' -Actions 'true' `
             -EventName 'workflow_dispatch' -Ref 'refs/heads/feature'
     } 'main-branch recovery dispatch' 'Non-main recovery dispatch'
 
@@ -176,32 +176,32 @@ try {
         sourceCommit = '0000000000000000000000000000000000000000'
     } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $artifactDirectory 'release-manifest.json')
 
-    $disabledOutput = (& (Join-Path $PSScriptRoot 'Publish-GitHubPackage.ps1') -Plugin Server.Mcp -Tag $testTag -ArtifactDirectory $artifactDirectory -Owner aaronpowell -Repository aaronpowell/LANCommander.Community 2>&1) -join "`n"
+    $disabledOutput = (& (Join-Path $PSScriptRoot 'Publish-GitHubPackage.ps1') -Plugin Server.Mcp -Tag $testTag -ArtifactDirectory $artifactDirectory -Owner LANCommander -Repository LANCommander/LANCommander.Community 2>&1) -join "`n"
     if ($disabledOutput -notmatch 'publishing is disabled') { throw 'The default GitHub Packages path did not remain disabled.' }
 
-    $planOutput = (& (Join-Path $PSScriptRoot 'Publish-GitHubPackage.ps1') -Plugin Server.Mcp -Tag $testTag -ArtifactDirectory $artifactDirectory -Owner aaronpowell -Repository aaronpowell/LANCommander.Community -Publish -PlanOnly 2>&1) -join "`n"
+    $planOutput = (& (Join-Path $PSScriptRoot 'Publish-GitHubPackage.ps1') -Plugin Server.Mcp -Tag $testTag -ArtifactDirectory $artifactDirectory -Owner LANCommander -Repository LANCommander/LANCommander.Community -Publish -PlanOnly 2>&1) -join "`n"
     $planLine = @($planOutput -split "\r?\n" | Where-Object { $_ -match '^\{"component"' }) | Select-Object -Last 1
     $plan = $planLine | ConvertFrom-Json
     if ($plan.component -cne 'Server.Mcp' -or
         $plan.packageId -cne 'LANCommander.Community.Server.Mcp' -or
-        $plan.owner -cne 'aaronpowell' -or
-        $plan.feedUrl -cne 'https://nuget.pkg.github.com/aaronpowell/index.json' -or
+        $plan.owner -cne 'LANCommander' -or
+        $plan.feedUrl -cne 'https://nuget.pkg.github.com/LANCommander/index.json' -or
         $plan.publishRequested -ne $true) {
         throw 'The GitHub Packages plan did not preserve component, identity, version, owner, and feed.'
     }
     Remove-Item Env:GITHUB_TOKEN -ErrorAction SilentlyContinue
     Assert-Fails {
-        & (Join-Path $PSScriptRoot 'Publish-GitHubPackage.ps1') -Plugin Server.Mcp -Tag $testTag -ArtifactDirectory $artifactDirectory -Owner aaronpowell -Repository aaronpowell/LANCommander.Community -Publish
+        & (Join-Path $PSScriptRoot 'Publish-GitHubPackage.ps1') -Plugin Server.Mcp -Tag $testTag -ArtifactDirectory $artifactDirectory -Owner LANCommander -Repository LANCommander/LANCommander.Community -Publish
     } 'GITHUB_TOKEN is unavailable' 'Missing GitHub Packages credential'
     Assert-Fails {
-        & (Join-Path $PSScriptRoot 'Publish-GitHubPackage.ps1') -Plugin Server.Mcp -Tag $wrongTag -ArtifactDirectory $artifactDirectory -Owner aaronpowell -Repository aaronpowell/LANCommander.Community -Publish -PlanOnly
+        & (Join-Path $PSScriptRoot 'Publish-GitHubPackage.ps1') -Plugin Server.Mcp -Tag $wrongTag -ArtifactDirectory $artifactDirectory -Owner LANCommander -Repository LANCommander/LANCommander.Community -Publish -PlanOnly
     } 'does not match' 'Release tag selection'
     $manifestPath = Join-Path $artifactDirectory 'release-manifest.json'
     $manifestText = Get-Content -LiteralPath $manifestPath -Raw
     try {
         Set-Content -LiteralPath $manifestPath -Value ($manifestText.Replace('"nupkg"', '"zip"'))
         Assert-Fails {
-            & (Join-Path $PSScriptRoot 'Publish-GitHubPackage.ps1') -Plugin Server.Mcp -Tag $testTag -ArtifactDirectory $artifactDirectory -Owner aaronpowell -Repository aaronpowell/LANCommander.Community -Publish -PlanOnly
+            & (Join-Path $PSScriptRoot 'Publish-GitHubPackage.ps1') -Plugin Server.Mcp -Tag $testTag -ArtifactDirectory $artifactDirectory -Owner LANCommander -Repository LANCommander/LANCommander.Community -Publish -PlanOnly
         } 'manifest does not match' 'ZIP artifact rejected by NuGet publisher'
     }
     finally { Set-Content -LiteralPath $manifestPath -Value $manifestText }
@@ -233,9 +233,9 @@ try {
     } 'duplicate path' 'Duplicate archive entry'
 
     $serviceIndex = @'
-{"resources":[{"@id":"https://nuget.pkg.github.com/aaronpowell/download/","@type":"PackageBaseAddress/3.0.0"}]}
+{"resources":[{"@id":"https://nuget.pkg.github.com/LANCommander/download/","@type":"PackageBaseAddress/3.0.0"}]}
 '@ | ConvertFrom-Json
-    if ((Get-GitHubNuGetPackageBaseAddress -ServiceIndex $serviceIndex) -cne 'https://nuget.pkg.github.com/aaronpowell/download') {
+    if ((Get-GitHubNuGetPackageBaseAddress -ServiceIndex $serviceIndex) -cne 'https://nuget.pkg.github.com/LANCommander/download') {
         throw 'GitHub Packages flat-container resource was not selected.'
     }
 

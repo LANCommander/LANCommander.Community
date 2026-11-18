@@ -64,13 +64,13 @@
       "key": "Server.RecompCatalog",
       "tagPrefix": "server-recompcatalog",
       "versionFile": "plugins/Server.RecompCatalog/version.txt",
-      "project": "plugins/Server.RecompCatalog/LANCommander.Community.Server.RecompCatalog.Plugin/LANCommander.Community.Server.RecompCatalog.Plugin.csproj",
+      "project": "plugins/Server.RecompCatalog/LANCommander.Community.Server.RecompCatalog/LANCommander.Community.Server.RecompCatalog.csproj",
       "tests": [
         "plugins/Server.RecompCatalog/LANCommander.Community.Server.RecompCatalog.Tests/LANCommander.Community.Server.RecompCatalog.Tests.csproj"
       ],
-      "rootNamespace": "LANCommander.Community.Server.RecompCatalog.Plugin",
-      "packageId": "LANCommander.Community.Server.RecompCatalog.Plugin",
-      "assemblyName": "LANCommander.Community.Server.RecompCatalog.Plugin",
+      "rootNamespace": "LANCommander.Community.Server.RecompCatalog",
+      "packageId": "LANCommander.Community.Server.RecompCatalog",
+      "assemblyName": "LANCommander.Community.Server.RecompCatalog",
       "packageTypes": [
         "LANCommander.Plugin",
         "LANCommander.Plugin.Server"
@@ -93,14 +93,14 @@
       "key": "Launcher.MQTT",
       "tagPrefix": "launcher-mqtt",
       "versionFile": "plugins/Launcher.MQTT/version.txt",
-      "project": "plugins/Launcher.MQTT/src/LANCommander.Community.Launcher.MQTT.Plugin/LANCommander.Community.Launcher.MQTT.Plugin.csproj",
+      "project": "plugins/Launcher.MQTT/src/LANCommander.Community.Launcher.MQTT/LANCommander.Community.Launcher.MQTT.csproj",
       "tests": [
         "plugins/Launcher.MQTT/tests/LANCommander.Community.Launcher.MQTT.Core.Tests/LANCommander.Community.Launcher.MQTT.Core.Tests.csproj",
         "plugins/Launcher.MQTT/tests/LANCommander.Community.Launcher.MQTT.HostLoader.Tests/LANCommander.Community.Launcher.MQTT.HostLoader.Tests.csproj"
       ],
       "rootNamespace": "LANCommander.Community.Launcher.MQTT",
-      "packageId": "LANCommander.Community.Launcher.MQTT.Plugin",
-      "assemblyName": "LANCommander.Community.Launcher.MQTT.Plugin",
+      "packageId": "LANCommander.Community.Launcher.MQTT",
+      "assemblyName": "LANCommander.Community.Launcher.MQTT",
       "packageTypes": [
         "LANCommander.Plugin",
         "LANCommander.Plugin.Launcher"

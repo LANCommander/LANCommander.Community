@@ -5,7 +5,7 @@ param(
     [string] $Plugin,
     [Parameter(Mandatory)][string] $Tag,
     [Parameter(Mandatory)][string] $ArtifactDirectory,
-    [string] $Repository = 'aaronpowell/LANCommander.Community',
+    [string] $Repository = 'LANCommander/LANCommander.Community',
     [switch] $PlanOnly
 )
 

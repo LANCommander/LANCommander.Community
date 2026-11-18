@@ -9,8 +9,8 @@ $repositoryRoot = Split-Path $PSScriptRoot -Parent
 & (Join-Path $PSScriptRoot 'Test-NuGetPackage.ps1') -Plugin Launcher.MQTT -PackagePath $PackagePath -ExpectedVersion $ExpectedVersion -RequireRepositoryUrl
 $root = 'lib/net10.0/'
 $required = @(
-    "${root}LANCommander.Community.Launcher.MQTT.Plugin.dll",
-    "${root}LANCommander.Community.Launcher.MQTT.Plugin.deps.json",
+    "${root}LANCommander.Community.Launcher.MQTT.dll",
+    "${root}LANCommander.Community.Launcher.MQTT.deps.json",
     "${root}LANCommander.Community.Launcher.MQTT.Core.dll",
     "${root}LANCommander.Community.Launcher.MQTT.Transport.dll",
     "${root}MQTTnet.dll",
@@ -39,12 +39,12 @@ try {
     try { $example = $reader.ReadToEnd() | ConvertFrom-Json } finally { $reader.Dispose() }
     if ($example.BrokerUsername -or $example.BrokerPassword) { throw 'Launcher package contains populated credentials.' }
     New-Item -ItemType Directory -Path $temporary | Out-Null
-    $pluginDirectory = Join-Path $temporary 'LANCommander.Community.Launcher.MQTT.Plugin'
+    $pluginDirectory = Join-Path $temporary 'LANCommander.Community.Launcher.MQTT'
     New-Item -ItemType Directory -Path $pluginDirectory | Out-Null
     foreach ($name in $required) {
         [IO.Compression.ZipFileExtensions]::ExtractToFile($archive.GetEntry($name), (Join-Path $pluginDirectory ($name.Substring($root.Length))))
     }
-    $env:LANCOMMANDER_MQTT_PLUGIN_PATH = Join-Path $pluginDirectory 'LANCommander.Community.Launcher.MQTT.Plugin.dll'
+    $env:LANCOMMANDER_MQTT_PLUGIN_PATH = Join-Path $pluginDirectory 'LANCommander.Community.Launcher.MQTT.dll'
     $env:LANCOMMANDER_MQTT_PACKAGE_PATH = (Get-Item -LiteralPath $PackagePath).FullName
     $env:LANCOMMANDER_MQTT_PACKAGE_TEST_ROOT = $temporary
     $env:LANCOMMANDER_MQTT_PACKAGE_VERSION = $ExpectedVersion
