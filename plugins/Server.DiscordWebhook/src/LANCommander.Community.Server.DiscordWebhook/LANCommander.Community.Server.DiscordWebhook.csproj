@@ -1,9 +1,28 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
     <RootNamespace>LANCommander.Community.Server.DiscordWebhook</RootNamespace>
     <AssemblyName>LANCommander.Community.Server.DiscordWebhook</AssemblyName>
     <PackageId>LANCommander.Community.Server.DiscordWebhook</PackageId>
-    <!-- No installable plugin until the host publishes a subscription action contract. -->
-    <IsPackable>false</IsPackable>
+    <IsPackable>true</IsPackable>
+    <Version>$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)..\..\version.txt').Trim())</Version>
+    <Description>Administrator-managed Discord event notifications for LANCommander servers.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/LANCommander/LANCommander.Community</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/LANCommander/LANCommander.Community/tree/main/plugins/Server.DiscordWebhook</PackageProjectUrl>
+    <PackageType>LANCommander.Plugin;LANCommander.Plugin.Server</PackageType>
+    <PackageTags>LANCommander;plugin;server;discord;webhook</PackageTags>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <StaticWebAssetsEnabled>false</StaticWebAssetsEnabled>
   </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="LANCommander.SDK" ExcludeAssets="runtime;native" PrivateAssets="all" />
+    <PackageReference Include="LANCommander.Server.Plugins" ExcludeAssets="runtime;native" PrivateAssets="all" />
+    <PackageReference Include="LANCommander.Server.UI" ExcludeAssets="runtime;native" PrivateAssets="all" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" ExcludeAssets="runtime;native" PrivateAssets="all" />
+    <InternalsVisibleTo Include="LANCommander.Community.Server.DiscordWebhook.Tests" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

@@ -207,6 +207,23 @@ public sealed class DiscordWebhookTests
     }
 
     [Fact]
+    public async Task BrokenRateLimitBodyDoesNotDiscardKnownRetryAfterHeader()
+    {
+        using var client = new DiscordWebhookClient(new FakeHandler((_, _) =>
+        {
+            var response = new HttpResponseMessage(HttpStatusCode.TooManyRequests)
+            {
+                Content = new BrokenContent()
+            };
+            response.Headers.TryAddWithoutValidation("Retry-After", "120.5");
+            return Task.FromResult(response);
+        }));
+        var result = await client.SendAsync(DiscordWebhookEndpoint.Parse(Endpoint), new("Hello"));
+        Assert.Equal(DiscordDeliveryStatus.RateLimited, result.Status);
+        Assert.Equal(120.5, result.RetryAfter!.Value.TotalSeconds);
+    }
+
+    [Fact]
     public async Task RejectsInvalidMessageWithoutInvokingHandlerOrEchoingContent()
     {
         var handler = new FakeHandler((_, _) => throw new InvalidOperationException("Should not send"));
@@ -286,5 +303,13 @@ public sealed class DiscordWebhookTests
             Calls++;
             return send(request, cancellationToken);
         }
+
+    }
+
+    private sealed class BrokenContent : HttpContent
+    {
+        protected override Task SerializeToStreamAsync(Stream stream, TransportContext? context) =>
+            throw new IOException("Untrusted body read failed");
+        protected override bool TryComputeLength(out long length) { length = 0; return false; }
     }
 }

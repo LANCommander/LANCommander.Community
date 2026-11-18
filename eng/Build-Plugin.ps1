@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [ValidateSet('Server.Mcp', 'Server.RecompCatalog', 'Launcher.MQTT', 'Server.Quake3')]
+    [ValidateSet('Server.Mcp', 'Server.RecompCatalog', 'Launcher.MQTT', 'Server.Quake3', 'Server.DiscordWebhook')]
     [string] $Plugin,
     [switch] $Package,
     [string] $OutputDirectory
@@ -73,6 +73,9 @@ else {
     }
     elseif ($Plugin -eq 'Server.Quake3') {
         & (Join-Path $repositoryRoot 'plugins/Server.Quake3/eng/Test-Package.ps1') -PackagePath $asset -ExpectedVersion $version
+    }
+    elseif ($Plugin -eq 'Server.DiscordWebhook') {
+        & (Join-Path $repositoryRoot 'plugins/Server.DiscordWebhook/eng/Test-Package.ps1') -PackagePath $asset -ExpectedVersion $version
     }
     else {
         & (Join-Path $PSScriptRoot 'Test-Recomp-Package.ps1') -PackagePath $asset -ExpectedVersion $version

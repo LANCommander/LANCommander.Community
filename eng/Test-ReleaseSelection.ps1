@@ -25,7 +25,10 @@ Assert-Equal '0.2.2' $tag[0].version 'Component-tag SemVer'
 $quake = @(Resolve-PluginSelection -Tag 'server-quake3-v0.1.0-beta.2')
 Assert-Equal 'Server.Quake3' $quake[0].key 'Quake component-tag selection'
 Assert-Equal '0.1.0-beta.2' $quake[0].version 'Quake independent prerelease'
-Assert-Equal 4 @(Get-PluginRegistry).Count 'Complete component registry'
+Assert-Equal 5 @(Get-PluginRegistry).Count 'Complete component registry'
+$discord = @(Resolve-PluginSelection -Tag 'server-discordwebhook-v0.1.0-beta.1')
+Assert-Equal 'Server.DiscordWebhook' $discord[0].key 'Discord independent component selection'
+Assert-Equal '0.1.0-beta.1' $discord[0].version 'Discord prerelease version'
 
 $batch = @(Resolve-PluginSelection -Plugins @('Server.Mcp', 'Server.RecompCatalog', 'Launcher.MQTT'))
 Assert-Equal @('Server.Mcp', 'Server.RecompCatalog', 'Launcher.MQTT') @($batch | ForEach-Object key) 'Coordinated LC batch'

@@ -19,7 +19,7 @@ public sealed record DiscordDeliveryResult(
     int? HttpStatusCode = null,
     TimeSpan? RetryAfter = null);
 
-/// <summary>One attempt only; a future host action adapter must own durable scheduling.</summary>
+/// <summary>One attempt only; the plugin delivery store owns durable scheduling.</summary>
 public sealed class DiscordWebhookClient : IDisposable
 {
     private readonly HttpClient _client;
@@ -71,7 +71,10 @@ public sealed class DiscordWebhookClient : IDisposable
             if (response.StatusCode == HttpStatusCode.TooManyRequests)
             {
                 var headerDelay = ReadRetryAfter(response);
-                var bodyDelay = await ReadBodyRetryAfterAsync(response, timeout.Token);
+                TimeSpan? bodyDelay;
+                try { bodyDelay = await ReadBodyRetryAfterAsync(response, timeout.Token); }
+                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested) { bodyDelay = null; }
+                catch (Exception ex) when (ex is HttpRequestException or IOException) { bodyDelay = null; }
                 var delay = headerDelay is null ? bodyDelay :
                     bodyDelay is null || headerDelay >= bodyDelay ? headerDelay : bodyDelay;
                 return new(DiscordDeliveryStatus.RateLimited, code, delay);

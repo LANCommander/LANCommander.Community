@@ -1,135 +1,171 @@
-# Discord webhook action groundwork
+# Discord webhooks
 
-**Not an installable LANCommander plugin yet.** This directory contains a
-non-packable Discord payload and single-attempt delivery library, with offline
-tests. It deliberately has no plugin registration, event consumer, subscription
-store, background worker, configuration page, or release-registry entry.
-No existing plugin or generic webhook behavior is changed.
+A separate administrator-only page at **`/Plugins/DiscordWebhooks`**, linked in
+the server sidebar as **Discord webhooks**. This plugin receives LANCommander's
+published server events, selects its own enabled subscriptions, and sends
+Discord-compatible messages. It does not replace the event transport, poll for
+events, or modify the built-in generic webhook settings, subscriptions or UI.
 
-## Host contract findings
+## Requirements and installation
 
-Inspected the official repository at
-[`d5fe374e11e46479c848dd89523ae6963b4e7e8f`](https://github.com/LANCommander/LANCommander/tree/d5fe374e11e46479c848dd89523ae6963b4e7e8f)
-(main, 2026-11-12) and the published
-[`v2.2.0-beta.4`](https://github.com/LANCommander/LANCommander/releases/tag/v2.2.0-beta.4)
-contracts (source `675befe0673c03aded2b45995694661ce454ba95`).
-The public NuGet `LANCommander.Server.Plugins` feed's latest version at
-inspection was `2.2.0-beta.4`; no newer package supplies the missing action API.
-This library itself has no host dependency and makes no host compatibility
-claim for an integrated plugin.
+Requires **LANCommander Server 2.2.0-beta.4 or later** and .NET 10. Compiled and
+loader-tested against published `LANCommander.SDK`, `LANCommander.Server.Plugins`
+and `LANCommander.Server.UI` **2.2.0-beta.4**, corresponding to upstream source
+`675befe0673c03aded2b45995694661ce454ba95`. A compile-time package restore does
+not upgrade the host. Newer hosts are not live-tested.
 
-The public
-[`ServerEventContracts.cs`](https://github.com/LANCommander/LANCommander/blob/d5fe374e11e46479c848dd89523ae6963b4e7e8f/LANCommander.Server.Plugins/Messaging/ServerEventContracts.cs)
-contains:
+The package and assembly identity is
+`LANCommander.Community.Server.DiscordWebhook`; its stable plugin ID is
+`io.github.lancommander.community.discordwebhook`. The independent initial
+version is **0.1.0-beta.1**, not a claim that it has been published.
+Package types are `LANCommander.Plugin` and `LANCommander.Plugin.Server`.
+Only the plugin DLL is bundled; host/framework dependencies are never bundled.
+No Discord SDK, bot account or bot token is required.
 
-- `IServerEventConsumer.HandleAsync(ServerEvent, CancellationToken)`, registered
-  in `IPlugin.ConfigureServices`. Every consumer receives every published event.
-- `IServerEventTransport.ConfigureTransport(StandardConfigurer<ITransport>, string)`
-  and `ConfigureSubscriptions(StandardConfigurer<ISubscriptionStorage>)`,
-  also registered in `ConfigureServices`. The first registered transport replaces
-  the in-memory **Rebus broker transport**; it is not an outbound webhook target.
-  Implementing it as a Discord HTTP sender would not provide broker semantics.
+Build the local `.nupkg` with the validation command below. Install an
+authorized published package through LANCommander's server plugin management,
+or extract the contents of `lib/net10.0` from the locally built package to a
+dedicated server `Plugins` subdirectory while the host is stopped. Restart
+the server for discovery. Do not copy test output or host dependency DLLs.
+This PR does not publish a package, create release tags, or install anything.
 
-[`AddServerEvents`](https://github.com/LANCommander/LANCommander/blob/d5fe374e11e46479c848dd89523ae6963b4e7e8f/LANCommander.Server.Services/Events/EventServiceCollectionExtensions.cs)
-registers the concrete generic webhook consumer/handler and subscribes the bus to
-`ServerEvent`. The
-[`publisher`](https://github.com/LANCommander/LANCommander/blob/d5fe374e11e46479c848dd89523ae6963b4e7e8f/LANCommander.Server.Services/Events/ServerEventPublisher.cs)
-publishes independently of generic webhook subscriptions, after saving built-in
-outboxes. The
-[`dispatcher`](https://github.com/LANCommander/LANCommander/blob/d5fe374e11e46479c848dd89523ae6963b4e7e8f/LANCommander.Server.Services/Events/ServerEventDispatcher.cs)
-fans out to all consumers with the host's application-stopping token.
-Consumer failures are logged by type and dropped, not retried. The default event
-transport is in-memory. Durable generic webhook recovery does not replay events
-to other consumers; `IServerEventOutbox` is in host Services, not the public
-plugin contracts.
+## Management
 
-The built-in
-[`WebhookSubscription`](https://github.com/LANCommander/LANCommander/blob/d5fe374e11e46479c848dd89523ae6963b4e7e8f/LANCommander.Server.Data/Models/WebhookSubscription.cs)
-has endpoint, signing secret, event filter, enabled, timeout and attempt settings,
-but no provider/action identifier or action-specific configuration. Its
-[`handler`](https://github.com/LANCommander/LANCommander/blob/d5fe374e11e46479c848dd89523ae6963b4e7e8f/LANCommander.Server.Services/Events/WebhookDeliveryHandler.cs)
-posts stored event-envelope JSON directly, with no plugin transformation or
-delivery callback. Settings and APIs are administrator-only; saved signing
-secrets are protected and not returned, but endpoint URLs are returned unchanged.
-A Discord URL token cannot safely be treated as an ordinary visible endpoint.
+Sign in as a LANCommander administrator and open **Discord webhooks**.
+The host page access attribute, navigation policy and every administration
+service operation require the host's administrator policy. There are no
+unauthenticated plugin HTTP endpoints.
 
-Therefore a Discord action **inside the host's existing subscription system**
-requires a public action-provider registry/discovery contract, provider ID and
-secret-aware configuration schema/persistence/UI on subscriptions, and a
-host-selected delivery callback with cancellation, status and retry-after
-semantics. Those APIs do not exist in beta.4 or inspected main. No fake action,
-reflection, internal API dependency, or host change is included here.
+Choose **New subscription**, then supply:
 
-A separate plugin-owned Discord subscriptions UI could instead use
-`IServerEventConsumer`, but that changes the product boundary: the plugin would
-own filtering, protected credentials, storage, administration, queueing and
-retries. Its durability could begin only after consumer receipt; event loss
-before receipt or on enqueue failure would remain possible. That alternative
-requires explicit approval before implementation.
+- A name (1-100 characters) and an incoming Discord webhook URL.
+- One or more exact event types from the published host event catalogue.
+- Enabled/disabled state, optional fixed message content (up to 1,000 characters),
+  timeout (1-30 seconds, default 10), and total attempt budget (1-5, default 3).
 
-## Reusable Discord behavior
+Use **Save subscription** to create or update. Editing shows a blank password
+field, never the existing URL; leave it blank to preserve the saved credential.
+Saving cancels pending/in-flight records for that subscription so old queued
+events do not unexpectedly use changed destinations or settings. An HTTP
+request already sent cannot be recalled. Concurrent edits/deletes are rejected
+using revision checks rather than silently overwriting another administrator.
+Delete requires confirmation and removes the subscription and its history.
 
-`DiscordWebhookEndpoint.Parse` permits canonical HTTPS incoming webhook URLs on
-`discord.com` and `discordapp.com`, using `/api/webhooks/{id}/{token}` or
-`/api/v10/webhooks/{id}/{token}`. It rejects credentials, queries, fragments,
-custom ports, encoded/normalized paths and arbitrary hosts. The endpoint object's
-string representation is redacted; validation errors never echo the input.
-Do not log, serialize or display raw endpoint input.
+**Send test** explicitly queues a synthetic `server.webhook.test` message for
+only that enabled subscription, regardless of its event filter. It does not
+change host resources, but **does send a real message** if used on a running
+installation. Tests in this repository never invoke real Discord endpoints.
+Refresh the page to see pending, in-flight, canceled, delivered, failed or
+secret-unavailable status, attempts, last outcome, HTTP code and next retry.
+Receiver text, exception messages and webhook URLs never appear in history.
 
-`DiscordPayload.Serialize` creates Discord JSON, not a LANCommander envelope.
-Supported fields are content, optional username, and rich embeds containing
-title, description, RGB color, fields, footer text and author name. All mention
-parsing is disabled, including user/role/everyone mentions. JSON serialization
-handles quoting, escaping and Unicode without string interpolation.
+## Messages and endpoint safety
 
-Validation rejects rather than truncates: content 2,000; username 80; at most
-10 embeds; title/author 256; description 4,096; footer 2,048; at most 25 fields
-per embed; field name 256 and value 1,024; combined embed text 6,000. Lengths
-use UTF-16 code units (conservative for supplementary characters). Content or
-a nonempty text embed is required. No attachment, forum/thread, component,
-avatar, bot token, Discord SDK or arbitrary JSON support is included.
+Messages contain optional fixed content and a safe embed with the event type,
+target type/ID, status, UTC timestamp and event ID. Arbitrary host payloads,
+actor identity, usernames, issue descriptions, credentials and other free-form
+event data are **not** forwarded. Administrators must still consider target IDs,
+event types/times, status and fixed content sensitive when choosing a channel.
+All Discord mention parsing is disabled, including user, role and everyone
+mentions. Formatting/escaping uses JSON serialization, not interpolation.
 
-`DiscordWebhookClient.SendAsync` performs exactly one POST, adds controlled
-`wait=true` so Discord confirms the message was saved, and accepts a 1-30 second
-timeout (default 10). Cancellation propagates; timeouts and transport errors
-become bounded typed results. Responses, reason phrases and exception messages
-are never logged or returned. Redirects, proxies, cookies and trace-header
-propagation are disabled on the default handler. There is no HTTP-client-factory
-request logger. The injectable handler is for trusted implementations/tests only.
+Only canonical HTTPS incoming webhook URLs on `discord.com` or `discordapp.com`
+are accepted, at `/api/webhooks/{id}/{token}` or
+`/api/v10/webhooks/{id}/{token}`. Queries, fragments, credentials, custom ports,
+encoded/normalized paths and arbitrary hosts are rejected without echoing input.
+The client adds controlled `wait=true` for server-confirmed message creation.
+Forum/media thread destinations, attachments, avatars, components, arbitrary
+JSON and custom templates are not supported.
+
+The reusable payload serializer enforces Discord's content (2,000), embed count
+(10), title/author (256), description (4,096), footer (2,048), field count (25),
+field name/value (256/1,024) and combined embed text (6,000) limits. It rejects
+oversized messages rather than truncating, using conservative UTF-16 lengths.
+The UI deliberately exposes a smaller, predictable message shape.
+
+URLs are protected with the host's ASP.NET Core data-protection provider and a
+plugin-specific purpose; they are not returned to the browser. The URL input is
+cleared after submission, including validation failure. The default HTTP handler
+disables redirects, cookies, proxies and trace-header propagation; no
+HTTP-client-factory request logger is used. HTTP status and fixed classifications
+are recorded, not bodies/reason phrases or exception text.
 Host-installed HTTP tracing/profilers can still observe URLs: disable or redact
-webhook paths in that instrumentation before integrating a credentialed client.
+webhook paths in that instrumentation. Restrict outbound access and plugin Data
+directory permissions at the OS/container level. Discord execution tokens are
+credentials; never put them in logs, examples, fixed message content or commits.
 
-2xx is delivered, 408/5xx/network errors are transient, other failures
-(including redirects and missing/deleted webhooks) are rejected. HTTP 429
-returns a rate-limit result and the greater valid delay from `Retry-After`
-(seconds or HTTP date) and JSON `retry_after` (fractional seconds). Untrusted
-rate-limit bodies are limited to 4 KiB. Invalid/missing delay remains explicitly
-unknown (`null`), not success. There is **no automatic retry, sleep, rate-limit
-bucket coordinator, persistent delivery history or restart recovery**. A future
-adapter must schedule retries without shortening supplied delays, coordinate
-per-webhook/global limits, and avoid retrying permanent failures. An ambiguous
-network timeout may follow a successful send; retrying can duplicate messages.
-Do not use the single-attempt client as a complete notification service.
+## Delivery guarantees and limits
 
-Discord references:
-[execute webhook](https://docs.discord.com/developers/resources/webhook#execute-webhook),
-[embed limits](https://docs.discord.com/developers/resources/message#embed-object-embed-limits),
-[rate limits](https://docs.discord.com/developers/topics/rate-limits).
+The public beta.4
+[`IServerEventConsumer`](https://github.com/LANCommander/LANCommander/blob/675befe0673c03aded2b45995694661ce454ba95/LANCommander.Server.Plugins/Messaging/ServerEventContracts.cs)
+receives every event independently of built-in webhook filters. The plugin
+filters that stream; it does not duplicate host event publication.
+The host's default Rebus transport is in-memory, and the host dispatcher logs
+and drops consumer failures. **Events may be lost before plugin receipt or if
+enqueue fails.** The built-in generic webhook outbox does not replay events to
+this plugin. There is no claim of end-to-end guaranteed delivery.
 
-## Development
+Once queued and committed locally, work survives normal host restarts.
+A single worker claims and persists each attempt before HTTP. Interrupted
+attempts consume budget and are recovered after their saved timeout lease
+expires; the final interrupted attempt is marked failed rather than sent again.
+Caller/host cancellation propagates. Crashes, timeouts or failed result commits
+after Discord accepted a message can lead to duplicates. Delivery is not
+exactly-once or ordered. Event-ID deduplication covers only retained entries.
 
-Requires .NET 10 SDK. All delivery tests use an in-process fake handler and
-synthetic endpoints; no network messages or real credentials are used.
+2xx is delivered; HTTP 408/5xx, network errors and timeouts retry within the
+attempt budget with 5/10/20/40-second backoff (maximum 60 seconds).
+Other HTTP failures, including redirects, 400, 401 and deleted webhooks, fail
+without retry. Missing data-protection keys produce `SecretUnavailable`.
+HTTP 429 honors the greater valid `Retry-After` header (seconds/date) and JSON
+`retry_after` (fractional seconds); invalid/missing delay uses 60 seconds.
+The bounded 4-KiB response parser never exposes receiver content. The entire
+plugin pauses conservatively after any 429, so even global limits are respected
+across subscriptions and restarts. The worker starts at most one attempt each
+second; there is no hardcoded Discord route quota or cross-process rate broker.
+
+Storage is one atomic JSON-replacement file in **`PluginContext.DataDirectory`**,
+with an exclusive lifetime lock, serialized operations and disk flush before
+replacement. Limits are 32 subscriptions, 256 pending/in-flight deliveries,
+128 retained terminal entries and 4 MiB total state. Capacity overflow rejects
+the new event atomically (without evicting accepted work), records a persistent
+warning and logs a credential-free error. That warning describes past loss and
+remains until operator repair. Invalid/unreadable state is an explicit error,
+never reset to empty. Mutable state is never stored in the install directory.
+
+This is **single-server local storage**, not a clustered outbox. Do not share its
+Data directory across processes or network filesystems. When scaling the host,
+Rebus consumers may run on different instances and local subscriptions/queues
+are not synchronized. Keep one receiving instance for this plugin.
+Back up the plugin Data directory **and the host's persistent data-protection
+key ring** before upgrades. Losing keys prevents decrypting saved URLs; edit
+and resupply credentials to recover. Preserve Data during upgrades.
+Storage/permission failures require operator repair; do not delete state as an
+automatic recovery. A process/power failure can have an ambiguous final commit.
+
+## Validation and release
+
+Requires .NET 10 SDK and PowerShell 7:
 
 ```powershell
 dotnet test .\plugins\Server.DiscordWebhook\tests\LANCommander.Community.Server.DiscordWebhook.Tests\LANCommander.Community.Server.DiscordWebhook.Tests.csproj -c Release --nologo
 pwsh .\eng\Test-ReleaseSelection.ps1
 pwsh .\eng\Test-Repository.ps1
+pwsh .\eng\Validate-Plugin.ps1 -Plugin Server.DiscordWebhook -OutputDirectory .\artifacts\validation-discord-new
 ```
 
-CI runs the independent tests. Host registration/discovery, permissions/UI,
-installation, delivery persistence and real Discord delivery are not exercised
-or claimed. The reserved future project/package/assembly identity is
-`LANCommander.Community.Server.DiscordWebhook`. It remains non-packable until a
-supported integration is implemented and verified; no version, changelog,
-package types, registry entry, release allowlist or publication claim is added.
+Use a fresh output directory. Validation runs unit/integration/rendered UI tests,
+NuGet metadata/private-only inventory checks and shared-host-type discovery
+against the DLL extracted from the package. All HTTP tests use in-process fake
+handlers and synthetic credentials. These are not live LANCommander install,
+browser screenshots, real Discord delivery or live-host upgrade tests.
+
+CI and the independent registry/release selection include `Server.DiscordWebhook`.
+Future authorized tag format: `server-discordwebhook-v<version>`. See the child
+changelog and [repository release procedure](../../RELEASES.md). No release,
+package-feed publication or merge is performed by validation.
+
+Discord references:
+[execute webhook](https://docs.discord.com/developers/resources/webhook#execute-webhook),
+[embed limits](https://docs.discord.com/developers/resources/message#embed-object-embed-limits),
+[rate limits](https://docs.discord.com/developers/topics/rate-limits).

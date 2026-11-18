@@ -208,6 +208,9 @@ try {
     Assert-Fails {
         & (Join-Path $PSScriptRoot 'Publish-GitHubPackage.ps1') -Plugin Server.Mcp -Tag $testTag -ArtifactDirectory $artifactDirectory -Owner someone-else -Repository someone-else/LANCommander.Community -Publish -PlanOnly
     } 'restricted to the canonical' 'Repository/owner guard'
+    Assert-Fails {
+        & (Join-Path $PSScriptRoot 'Publish-GitHubPackage.ps1') -Plugin Server.Mcp -Tag $testTag -ArtifactDirectory $artifactDirectory -Owner aaronpowell -Repository aaronpowell/LANCommander.Community -Publish -PlanOnly
+    } 'restricted to the canonical' 'Former owner cannot publish after transfer'
 
     $equivalentPath = Join-Path $testRoot 'equivalent.nupkg'
     New-RepackedPackage -SourcePath $packagePath -DestinationPath $equivalentPath
