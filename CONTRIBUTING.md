@@ -30,6 +30,10 @@ keep component-specific packaging and host runtime exclusions in their projects.
 the CI matrix, and release selection. New components do not need a copied CI
 matrix entry or release job. The generic component tag trigger still fails closed
 on unknown prefixes, mismatched versions, and commits not reachable from `main`.
+PR impact selection is conservative for shared or unknown paths; keep its
+regressions in `eng/Test-CISelection.ps1` current when classifying a new docs-only
+area. See [PR packages](README.md#pull-request-packages) for download links,
+fork behavior and commenting prerequisites.
 
 Before submitting changes, run the repository checks and the validation
 command(s) for affected components from the root [README](README.md#build-and-validate).

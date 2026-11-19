@@ -13,11 +13,18 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       plugins: ${{ steps.registry.outputs.plugins }}
+      has_plugins: ${{ steps.registry.outputs.has_plugins }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
           dotnet-version: 10.0.x
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
       - name: Validate release selection and repository metadata
         shell: pwsh
         run: |
@@ -26,16 +33,24 @@ jobs:
           ./eng/Test-ReleaseDestinations.ps1
           ./eng/Test-NuGetPublication.ps1
           ./eng/Test-GitHubPackages.ps1
-      - name: Select registered components
+          ./eng/Test-CISelection.ps1
+      - name: Test PR artifact commenting
+        run: node --test eng/pr-package-comment.test.cjs
+      - name: Select impacted components
         id: registry
         shell: pwsh
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          Import-Module ./eng/PluginRelease.psm1 -Force
-          $plugins = ConvertTo-Json -InputObject @(Get-PluginRegistry | ForEach-Object key) -Compress
+          $plugins = ./eng/Resolve-CISelection.ps1 -BaseCommit $env:PR_BASE_SHA -HeadCommit $env:PR_HEAD_SHA
           "plugins=$plugins" >> $env:GITHUB_OUTPUT
+          "has_plugins=$(@($plugins | ConvertFrom-Json).Count -gt 0)".ToLowerInvariant() >> $env:GITHUB_OUTPUT
+          if ($plugins -eq '[]') { 'Documentation-only change: no plugin packages required.' >> $env:GITHUB_STEP_SUMMARY }
 
   validate:
     needs: repository
+    if: needs.repository.outputs.has_plugins == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -43,6 +58,8 @@ jobs:
         plugin: ${{ fromJSON(needs.repository.outputs.plugins) }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
           dotnet-version: 10.0.x
@@ -58,4 +75,23 @@ jobs:
         run: python -m pip install -r plugins/Launcher.MQTT/tests/ha-template-requirements.txt
       - name: Validate ${{ matrix.plugin }}
         shell: pwsh
-        run: ./eng/Validate-Plugin.ps1 -Plugin '${{ matrix.plugin }}' -OutputDirectory (Join-Path $env:RUNNER_TEMP 'community-plugin-artifacts')
+        env:
+          CI_PLUGIN: ${{ matrix.plugin }}
+        run: ./eng/Validate-Plugin.ps1 -Plugin $env:CI_PLUGIN -OutputDirectory (Join-Path $env:RUNNER_TEMP 'community-plugin-artifacts')
+      - if: github.event_name == 'pull_request'
+        name: Upload checked PR package
+        id: package
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: pr-package-${{ matrix.plugin }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/community-plugin-artifacts/
+          if-no-files-found: error
+          retention-days: 7
+      - if: github.event_name == 'pull_request'
+        name: Link package download
+        shell: pwsh
+        env:
+          CI_PLUGIN: ${{ matrix.plugin }}
+          ARTIFACT_URL: ${{ steps.package.outputs.artifact-url }}
+        run: |
+          "[$env:CI_PLUGIN package download]($env:ARTIFACT_URL) (expires after 7 days; PR code is untrusted)." >> $env:GITHUB_STEP_SUMMARY
