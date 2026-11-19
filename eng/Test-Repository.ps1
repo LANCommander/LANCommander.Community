@@ -82,6 +82,19 @@ foreach ($project in $allProjects) {
     if ($packageId -and $packageId -cne $projectName) {
         throw "Project '$($project.FullName)' overrides PackageId '$packageId'; expected '$projectName'."
     }
+
+    $evaluation = & dotnet msbuild $project.FullName -nologo `
+        -getProperty:TargetFramework,ImplicitUsings,Nullable,TreatWarningsAsErrors,Version,PackageVersion,IsPackable
+    if ($LASTEXITCODE -ne 0) { throw "Could not evaluate build defaults for '$projectName'." }
+    $properties = ($evaluation -join "`n" | ConvertFrom-Json).Properties
+    $expectedVersion = Get-PluginVersion $component[0]
+    if ($properties.TargetFramework -cne 'net10.0' -or
+        $properties.ImplicitUsings -cne 'enable' -or $properties.Nullable -cne 'enable' -or
+        $properties.TreatWarningsAsErrors -cne 'true' -or
+        $properties.Version -cne $expectedVersion -or $properties.PackageVersion -cne $expectedVersion -or
+        $properties.IsPackable -cne ($projectName -ceq $componentRoot).ToString().ToLowerInvariant()) {
+        throw "Project '$projectName' lost shared defaults, component version, or packaging isolation."
+    }
 }
 
 $requiredFiles = @(

@@ -18,6 +18,13 @@ and explicit replacement instructions; never rewrite published versions. Keep
 Home Assistant discovery as the HA-specific integration layer; Launcher.MQTT's
 command/state protocol is usable by other MQTT clients too.
 
+Shared compiler and package defaults live in the root `Directory.Build.props`.
+`plugins/Directory.Build.props` imports them and reads the nearest component
+`version.txt` for both entry and helper/test projects, keeping component versions
+independent. Component-level props should contain only exceptions and import
+the shared plugin props. Do not copy shared defaults into individual projects;
+keep component-specific packaging and host runtime exclusions in their projects.
+
 Before submitting changes, run the repository checks and the validation
 command(s) for affected components from the root [README](README.md#build-and-validate).
 See [Plugin releases](RELEASES.md) for versioning, packaging, and release

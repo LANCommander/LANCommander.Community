@@ -2,9 +2,6 @@
   <PropertyGroup>
     <RootNamespace>LANCommander.Community.Launcher.MQTT.Core.Tests</RootNamespace>
     <AssemblyName>LANCommander.Community.Launcher.MQTT.Core.Tests</AssemblyName>
-    <TargetFramework>net10.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>

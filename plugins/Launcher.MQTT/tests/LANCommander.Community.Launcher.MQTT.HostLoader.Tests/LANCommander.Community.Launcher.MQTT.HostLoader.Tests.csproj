@@ -2,9 +2,6 @@
   <PropertyGroup>
     <RootNamespace>LANCommander.Community.Launcher.MQTT.HostLoader.Tests</RootNamespace>
     <AssemblyName>LANCommander.Community.Launcher.MQTT.HostLoader.Tests</AssemblyName>
-    <TargetFramework>net10.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <LANCommanderSourceRoot Condition="'$(LANCommanderSourceRoot)' == ''">$(LANCOMMANDER_SOURCE_ROOT)</LANCommanderSourceRoot>
