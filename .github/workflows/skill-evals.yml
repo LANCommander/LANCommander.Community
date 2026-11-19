@@ -105,11 +105,13 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci --no-audit --no-fund
-      - uses: github/evals-action@83fa12332c3e44ad899f347eaf153a0d9b6432dc # v0.1.0
-        with:
-          command: run
-          working-directory: .
-          eval-paths: ${{ needs.select.outputs.eval_paths }}
-          copilot-token: ${{ github.token }}
-          max-retries: 0
-          vally-version: '0.21.0'
+      - name: Run selected skill evals
+        shell: bash
+        env:
+          EVAL_PATHS: ${{ needs.select.outputs.eval_paths }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          while IFS= read -r eval_path; do
+            [[ -n "$eval_path" ]] || continue
+            npm run eval -- --eval-spec "$eval_path" --require-pass --max-retries 0
+          done <<< "$EVAL_PATHS"
