@@ -3,10 +3,7 @@ name: Component release
 on:
   push:
     tags:
-      - server-mcp-v*
-      - server-recompcatalog-v*
-      - launcher-mqtt-v*
-      - server-quake3-v*
+      - '*-v*'
   workflow_dispatch:
     inputs:
       tag:
@@ -92,66 +89,8 @@ jobs:
           "artifact_run_id=$env:ARTIFACT_RUN_ID" >> $env:GITHUB_OUTPUT
           "artifact_run_attempt=$env:ARTIFACT_RUN_ATTEMPT" >> $env:GITHUB_OUTPUT
 
-  server-mcp:
+  component-release:
     needs: plan
-    if: needs.plan.outputs.plugin == 'Server.Mcp'
-    concurrency:
-      group: release-server-mcp
-      cancel-in-progress: false
-    permissions:
-      actions: read
-      contents: write
-      packages: write
-    uses: ./.github/workflows/release-plugin.yml
-    with:
-      plugin: Server.Mcp
-      tag: ${{ needs.plan.outputs.tag }}
-      artifact_run_id: ${{ needs.plan.outputs.artifact_run_id }}
-      artifact_run_attempt: ${{ needs.plan.outputs.artifact_run_attempt }}
-    secrets:
-      nuget_api_key: ${{ secrets.NUGET_API_KEY }}
-
-  server-quake3:
-    needs: plan
-    if: needs.plan.outputs.plugin == 'Server.Quake3'
-    permissions:
-      actions: read
-      contents: write
-      packages: write
-    uses: ./.github/workflows/release-plugin.yml
-    with:
-      plugin: Server.Quake3
-      tag: ${{ needs.plan.outputs.tag }}
-      artifact_run_id: ${{ needs.plan.outputs.artifact_run_id }}
-      artifact_run_attempt: ${{ needs.plan.outputs.artifact_run_attempt }}
-    secrets:
-      nuget_api_key: ${{ secrets.NUGET_API_KEY }}
-
-  server-recompcatalog:
-    needs: plan
-    if: needs.plan.outputs.plugin == 'Server.RecompCatalog'
-    concurrency:
-      group: release-server-recompcatalog
-      cancel-in-progress: false
-    permissions:
-      actions: read
-      contents: write
-      packages: write
-    uses: ./.github/workflows/release-plugin.yml
-    with:
-      plugin: Server.RecompCatalog
-      tag: ${{ needs.plan.outputs.tag }}
-      artifact_run_id: ${{ needs.plan.outputs.artifact_run_id }}
-      artifact_run_attempt: ${{ needs.plan.outputs.artifact_run_attempt }}
-    secrets:
-      nuget_api_key: ${{ secrets.NUGET_API_KEY }}
-
-  launcher-mqtt:
-    needs: plan
-    if: needs.plan.outputs.plugin == 'Launcher.MQTT'
-    concurrency:
-      group: release-launcher-mqtt
-      cancel-in-progress: false
     permissions:
       actions: read
       contents: write
@@ -159,7 +98,7 @@ jobs:
       packages: write
     uses: ./.github/workflows/release-plugin.yml
     with:
-      plugin: Launcher.MQTT
+      plugin: ${{ needs.plan.outputs.plugin }}
       tag: ${{ needs.plan.outputs.tag }}
       artifact_run_id: ${{ needs.plan.outputs.artifact_run_id }}
       artifact_run_attempt: ${{ needs.plan.outputs.artifact_run_attempt }}

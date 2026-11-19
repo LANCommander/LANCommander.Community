@@ -88,4 +88,34 @@ Assert-Fails { Resolve-PluginSelection -Tag 'server-mcp-v0.2.1-beta.01' } 'Malfo
 Assert-Fails { Resolve-PluginSelection -Plugins @('Server.RecompCatalog') -Tag 'server-mcp-v0.2.1' } 'Conflicting tag and selection'
 Assert-Fails { Resolve-PluginSelection } 'Missing selection'
 
+$fixtureRoot = Join-Path ([IO.Path]::GetTempPath()) "plugin-registry-$([Guid]::NewGuid().ToString('N'))"
+New-Item -ItemType Directory -Path (Join-Path $fixtureRoot 'eng') | Out-Null
+try {
+    $modulePath = Join-Path $fixtureRoot 'eng/RegistryFixture.psm1'
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'PluginRelease.psm1') -Destination $modulePath
+    Import-Module $modulePath -Prefix Fixture -Force
+    $registry = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'plugins.json') -Raw | ConvertFrom-Json
+    $extra = $registry.plugins[0] | ConvertTo-Json -Depth 5 | ConvertFrom-Json
+    $extra.key = 'Server.Example'
+    $extra.tagPrefix = 'server-example'
+    $extra.project = 'plugins/Server.Example/LANCommander.Community.Server.Example/LANCommander.Community.Server.Example.csproj'
+    $extra.packageId = $extra.assemblyName = $extra.rootNamespace = 'LANCommander.Community.Server.Example'
+    $registry.plugins += $extra
+    $registry | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $fixtureRoot 'eng/plugins.json')
+    Assert-Equal 5 @(Get-FixturePluginRegistry).Count 'Registry accepts a new canonical component without editing an allowlist'
+    $extra.tagPrefix = $registry.plugins[0].tagPrefix
+    $registry | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $fixtureRoot 'eng/plugins.json')
+    Assert-Fails { Get-FixturePluginRegistry } 'Registry rejects ambiguous tag prefixes'
+}
+finally {
+    Remove-Module RegistryFixture -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $fixtureRoot -Recurse -Force
+}
+
+Assert-Fails { & (Join-Path $PSScriptRoot 'Build-Plugin.ps1') -Plugin Server.Unknown } 'Build rejects unknown registry key'
+Assert-Fails { & (Join-Path $PSScriptRoot 'Validate-Plugin.ps1') -Plugin Server.Unknown } 'Validation rejects unknown registry key'
+Assert-Fails {
+    & (Join-Path $PSScriptRoot 'Test-NuGetPackage.ps1') -Plugin Server.Unknown -PackagePath missing.nupkg -ExpectedVersion 1.0.0
+} 'Package validation rejects unknown registry key'
+
 Write-Output 'Release selection tests passed.'

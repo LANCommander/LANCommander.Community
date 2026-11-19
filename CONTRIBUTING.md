@@ -26,6 +26,11 @@ independent. Component-level props should contain only exceptions and import
 the shared plugin props. Do not copy shared defaults into individual projects;
 keep component-specific packaging and host runtime exclusions in their projects.
 
+`eng/plugins.json` is the component allowlist used by build/validation scripts,
+the CI matrix, and release selection. New components do not need a copied CI
+matrix entry or release job. The generic component tag trigger still fails closed
+on unknown prefixes, mismatched versions, and commits not reachable from `main`.
+
 Before submitting changes, run the repository checks and the validation
 command(s) for affected components from the root [README](README.md#build-and-validate).
 See [Plugin releases](RELEASES.md) for versioning, packaging, and release
