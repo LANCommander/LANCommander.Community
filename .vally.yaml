@@ -1,0 +1,14 @@
+paths:
+  evals:
+    - evals
+  evalFilenames:
+    - "*.eval.yaml"
+  results: evals/results
+
+environments:
+  create-server-plugin:
+    skills:
+      - ../.github/skills/create-server-plugin
+  create-launcher-plugin:
+    skills:
+      - ../.github/skills/create-launcher-plugin

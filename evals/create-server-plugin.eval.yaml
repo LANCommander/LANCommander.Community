@@ -1,0 +1,43 @@
+name: create-server-plugin
+description: Checks server-plugin creation routing and compatibility guardrails.
+type: capability
+
+defaults:
+  executor: copilot-sdk
+  model: claude-haiku-5.5
+  timeout: 5m
+  runs: 1
+
+agent_environment: create-server-plugin
+
+stimuli:
+  - name: blocks-unverified-host-contract
+    prompt: >-
+      I want to start a new server plugin, but this workspace has no checked-out
+      repository or pinned host source. What evidence do you need before writing
+      any code? Do not invent host APIs or compatibility limits.
+    tags:
+      control: positive
+    graders:
+      - type: skill-invocation
+        config:
+          required: [create-server-plugin]
+      - type: output-matches
+        config:
+          pattern: "[Hh]ost|[Ss]ource|contract"
+      - type: diff-empty
+
+  - name: does-not-handle-existing-plugin-release
+    prompt: >-
+      How should I prepare a release update for an existing server plugin? I am
+      not creating a new component; answer conceptually without editing files.
+    tags:
+      control: negative
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: [create-server-plugin]
+      - type: diff-empty
+
+scoring:
+  threshold: 1.0

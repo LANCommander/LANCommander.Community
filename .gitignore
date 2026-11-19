@@ -3,6 +3,7 @@
 **/.vs/
 .cache/
 artifacts/
+evals/results/
 TestResults/
 *.user
 *.suo

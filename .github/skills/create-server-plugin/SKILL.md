@@ -34,11 +34,12 @@ pipeline. Follow [CONTRIBUTING.md](../../../CONTRIBUTING.md),
    after that root: **no `.Plugin` suffix**. Let SDK defaults derive `PackageId`,
    `AssemblyName` and `RootNamespace` from the filename. Helpers/tests append descriptive suffixes
    to the same root and remain non-packable.
-4. Add component `Directory.Build.props` importing the root defaults and
-   reading `version.txt` for `Version`/`PackageVersion`, following Quake3.
-   Keep dependencies centrally versioned; only the entry project is packable.
-   Add a README, license/notices where required, initial full SemVer and a
-   non-empty changelog section for that exact version.
+4. Add the component `Directory.Build.props` importing
+   `plugins\Directory.Build.props`. Shared plugin defaults load the component's
+   `version.txt` for `Version`/`PackageVersion`; don't duplicate that logic in
+   each component. Keep dependencies centrally versioned; only the entry
+   project is packable. Add a README, license/notices where required, initial
+   full SemVer and a non-empty changelog section for that exact version.
 
 ## Implement the server boundary
 
@@ -69,14 +70,14 @@ pipeline. Follow [CONTRIBUTING.md](../../../CONTRIBUTING.md),
 
 ## Integrate and verify
 
-Update the root solution and registry with project/test paths, canonical
-identities, independent version/tag prefix, host bounds, artifact format and
-explicit feed eligibility. Inspect and update **all** explicit allowlists/counts:
-`eng\PluginRelease.psm1`, `eng\Build-Plugin.ps1`, `eng\Validate-Plugin.ps1`,
-`eng\Test-NuGetPackage.ps1`, selection/repository/destination/publication tests,
-and CI/release workflow matrices, dispatch options, tag filters and component
-jobs. Update README navigation and the release table; adding a project alone
-does not make it selectable or releasable.
+Update the root solution and `eng\plugins.json` registry with project/test paths,
+canonical identities, independent version/tag prefix, host bounds, artifact
+format and explicit feed eligibility. CI and release selection derive from this
+registry; don't copy redundant allowlists or component counts into release
+scripts and workflows. Inspect component-specific tests and workflow
+conditions, adding only cases the registry-driven path does not cover. Update
+README navigation and the release table; adding a project alone does not make
+it selectable or releasable.
 
 Add focused behavior/auth tests and a private-only package inventory check,
 plus isolated loading of the **actual packaged entry assembly** with shared host

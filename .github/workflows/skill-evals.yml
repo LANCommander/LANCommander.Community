@@ -1,0 +1,108 @@
+name: Skill evals
+
+on:
+  pull_request:
+    paths:
+      - .github/skills/create-launcher-plugin/**
+      - .github/skills/create-server-plugin/**
+      - .github/workflows/skill-evals.yml
+      - .vally.yaml
+      - evals/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+      - name: Lint evaluation specs
+        run: npx --yes --package @microsoft/vally-cli@0.21.0 vally lint --eval-spec evals
+        env:
+          VALLY_TELEMETRY_OPTOUT: '1'
+
+  select:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      eval_paths: ${{ steps.changed.outputs.eval_paths }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - id: changed
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          declare -A selected=()
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            selected[server]=1
+            selected[launcher]=1
+          else
+            while IFS= read -r path; do
+              case "$path" in
+                .github/skills/create-server-plugin/*|evals/create-server-plugin.eval.yaml)
+                  selected[server]=1
+                  ;;
+                .github/skills/create-launcher-plugin/*|evals/create-launcher-plugin.eval.yaml)
+                  selected[launcher]=1
+                  ;;
+                .vally.yaml|.github/workflows/skill-evals.yml)
+                  selected[server]=1
+                  selected[launcher]=1
+                  ;;
+              esac
+            done < <(git diff --name-only --no-renames "$BASE_SHA" HEAD)
+          fi
+
+          eval_paths=()
+          if [[ -n "${selected[server]:-}" ]]; then
+            eval_paths+=(evals/create-server-plugin.eval.yaml)
+          fi
+          if [[ -n "${selected[launcher]:-}" ]]; then
+            eval_paths+=(evals/create-launcher-plugin.eval.yaml)
+          fi
+          {
+            echo "eval_paths<<EOF"
+            printf '%s\n' "${eval_paths[@]}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+  run:
+    needs: [lint, select]
+    if: >-
+      needs.select.outputs.eval_paths != '' &&
+      (github.event_name == 'workflow_dispatch' ||
+      github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      copilot-requests: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: github/evals-action@83fa12332c3e44ad899f347eaf153a0d9b6432dc # v0.1.0
+        env:
+          VALLY_TELEMETRY_OPTOUT: '1'
+        with:
+          command: run
+          working-directory: .
+          eval-paths: ${{ needs.select.outputs.eval_paths }}
+          copilot-token: ${{ github.token }}
+          max-retries: 0
+          vally-version: '0.21.0'
