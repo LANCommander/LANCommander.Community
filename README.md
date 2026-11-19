@@ -9,6 +9,7 @@ projects and releases.
 - [Server.Mcp](plugins/Server.Mcp/README.md)
 - [Server.RecompCatalog](plugins/Server.RecompCatalog/README.md)
 - [Server.Quake3](plugins/Server.Quake3/README.md)
+- [Server.DiscordWebhook](plugins/Server.DiscordWebhook/README.md)
 - [Launcher.MQTT](plugins/Launcher.MQTT/README.md)
 
 Each child README is the canonical guide for its plugin's requirements,
@@ -39,7 +40,7 @@ Validate a single plugin and create its local install artifact with
 `eng/Validate-Plugin.ps1`, selecting a component from the registry:
 
 ```powershell
-pwsh .\eng\Validate-Plugin.ps1 -Plugin <Server.Mcp|Server.RecompCatalog|Launcher.MQTT|Server.Quake3> -OutputDirectory <new-output-directory>
+pwsh .\eng\Validate-Plugin.ps1 -Plugin <Server.Mcp|Server.RecompCatalog|Launcher.MQTT|Server.Quake3|Server.DiscordWebhook> -OutputDirectory <new-output-directory>
 ```
 
 The output directory must not already exist. See each plugin README for its

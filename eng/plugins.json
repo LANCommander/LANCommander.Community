@@ -2,6 +2,28 @@
   "schemaVersion": 1,
   "plugins": [
     {
+      "key": "Server.DiscordWebhook",
+      "tagPrefix": "server-discordwebhook",
+      "versionFile": "plugins/Server.DiscordWebhook/version.txt",
+      "project": "plugins/Server.DiscordWebhook/src/LANCommander.Community.Server.DiscordWebhook/LANCommander.Community.Server.DiscordWebhook.csproj",
+      "tests": [
+        "plugins/Server.DiscordWebhook/tests/LANCommander.Community.Server.DiscordWebhook.Tests/LANCommander.Community.Server.DiscordWebhook.Tests.csproj"
+      ],
+      "rootNamespace": "LANCommander.Community.Server.DiscordWebhook",
+      "packageId": "LANCommander.Community.Server.DiscordWebhook",
+      "assemblyName": "LANCommander.Community.Server.DiscordWebhook",
+      "packageTypes": ["LANCommander.Plugin", "LANCommander.Plugin.Server"],
+      "packageTags": ["LANCommander", "plugin", "server", "discord", "webhook"],
+      "host": "Server",
+      "minimumHostVersion": "2.2.0-beta.4",
+      "maximumHostVersion": null,
+      "hostPackageVersion": "2.2.0-beta.4",
+      "hostSourceCommit": "675befe0673c03aded2b45995694661ce454ba95",
+      "artifactFormat": "nupkg",
+      "githubPackagesEligible": true,
+      "nugetOrgEligible": true
+    },
+    {
       "key": "Server.Quake3",
       "tagPrefix": "server-quake3",
       "versionFile": "plugins/Server.Quake3/version.txt",

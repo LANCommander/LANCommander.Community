@@ -1,0 +1,164 @@
+@page "/Plugins/DiscordWebhooks"
+@attribute [PluginAccess(PluginAccessLevel.Administrator)]
+@implements IDisposable
+@inject DiscordAdministration Administration
+@inject ILogger<Index> Logger
+
+<PageTitle>Discord webhooks</PageTitle>
+<PageHeader Title="Discord webhooks" Subtitle="Separate Discord subscriptions for server and launcher events" />
+<PageContent>
+    <Alert Info Title="Delivery guarantees">
+        Events are best-effort until received by this plugin. Queued notifications survive restarts;
+        retries may duplicate messages. No raw event payloads are sent. Test sends a real Discord message.
+    </Alert>
+    @if (_error is not null) { <Alert Danger Title="Operation failed">@_error</Alert> }
+    @if (_message is not null) { <Alert Info Title="Result">@_message</Alert> }
+    @if (_snapshot?.Warning is { } warning) { <Alert Warning Title="Delivery warning">@warning</Alert> }
+    <Card Title="Subscriptions">
+        <Button Disabled="@_busy" OnClick="RefreshAsync">Refresh</Button>
+        <Button Disabled="@_busy" OnClick="New">New subscription</Button>
+        @if (_snapshot is not null)
+        {
+            @if (_snapshot.Subscriptions.Count == 0) { <p>No Discord subscriptions configured.</p> }
+            @foreach (var item in _snapshot.Subscriptions)
+            {
+                <div @key="item.Id">
+                    <strong>@item.Name</strong> - @(item.Enabled ? "Enabled" : "Disabled")
+                    <Button Disabled="@_busy" OnClick="() => Edit(item)">Edit</Button>
+                    <Button Disabled="@(_busy || !item.Enabled)" OnClick="() => TestAsync(item.Id)">Send test</Button>
+                    <Button Disabled="@_busy" OnClick="() => ConfirmDelete(item)">Delete</Button>
+                </div>
+            }
+        }
+        @if (_delete is { } deleting)
+        {
+            <p>Delete @deleting.Name and its delivery history? A request already in progress cannot be recalled.</p>
+            <Button Danger Disabled="@_busy" OnClick="DeleteAsync">Confirm delete</Button>
+            <Button Disabled="@_busy" OnClick="() => _delete = null">Cancel delete</Button>
+        }
+    </Card>
+    @if (_editing)
+    {
+        <Card Title="@(_id == Guid.Empty ? "New Discord subscription" : "Edit Discord subscription")">
+            <fieldset disabled="@_busy">
+                <label for="discord-name">Name</label>
+                <input id="discord-name" maxlength="100" @bind="_name" />
+                <label for="discord-url">Webhook URL (secret)</label>
+                <input id="discord-url" type="password" autocomplete="new-password" @bind="_url" />
+                <p>@(_id == Guid.Empty ? "Paste an HTTPS Discord incoming webhook URL." : "Leave blank to keep the saved URL. Saved URLs are never returned.")</p>
+                <label for="discord-enabled"><input id="discord-enabled" type="checkbox" @bind="_enabled" />Enabled</label>
+                <label for="discord-content">Optional message content (up to 1000 characters)</label>
+                <textarea id="discord-content" maxlength="1000" @bind="_content"></textarea>
+                <p>A safe embed adds the event type, target, status, UTC time and event ID. Mentions are disabled.</p>
+                <label for="discord-timeout">Timeout seconds (1-30)</label>
+                <input id="discord-timeout" type="number" min="1" max="30" @bind="_timeout" />
+                <label for="discord-attempts">Maximum attempts (1-5)</label>
+                <input id="discord-attempts" type="number" min="1" max="5" @bind="_attempts" />
+                <p>Events</p>
+                @foreach (var eventType in LANCommander.SDK.Events.ServerEventTypes.All)
+                {
+                    <label>
+                        <input type="checkbox" checked="@_events.Contains(eventType)"
+                               @onchange="args => SelectEvent(eventType, args)" />@eventType
+                    </label>
+                }
+            </fieldset>
+            <p>Saving cancels pending deliveries for this subscription. An in-progress HTTP request may still complete.</p>
+            <Button Primary Disabled="@_busy" OnClick="SaveAsync">Save subscription</Button>
+            <Button Disabled="@_busy" OnClick="Cancel">Cancel editing</Button>
+        </Card>
+    }
+    <Card Title="Recent deliveries">
+        <p>Refresh to update. Pending and in-flight work plus the latest 128 completed entries are retained.</p>
+        @if (_snapshot is not null)
+        {
+            <table>
+                <thead><tr><th>Subscription</th><th>Event</th><th>Status</th><th>Outcome</th><th>Attempts</th><th>HTTP</th><th>Next attempt / completion</th></tr></thead>
+                <tbody>
+                    @foreach (var delivery in _snapshot.Deliveries)
+                    {
+                        <tr>
+                            <td>@(_snapshot.Subscriptions.FirstOrDefault(s => s.Id == delivery.SubscriptionId)?.Name ?? "Deleted")</td>
+                            <td>@delivery.EventType</td><td>@delivery.Status</td><td>@delivery.LastOutcome</td><td>@delivery.Attempts</td>
+                            <td>@delivery.HttpStatusCode</td><td>@delivery.NextAttemptOn.ToString("u")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </Card>
+</PageContent>
+
+@code {
+    private readonly CancellationTokenSource _lifetime = new();
+    private DiscordSnapshot? _snapshot;
+    private DiscordSubscriptionView? _delete;
+    private bool _busy, _editing, _enabled = true;
+    private Guid _id;
+    private long? _revision;
+    private string _name = "", _url = "", _content = "";
+    private string? _error, _message;
+    private int _timeout = 10, _attempts = 3;
+    private HashSet<string> _events = [];
+
+    protected override Task OnInitializedAsync() => RefreshAsync();
+    private Task RefreshAsync() => RunAsync(async () => _snapshot = await Administration.GetAsync(_lifetime.Token));
+    private void New()
+    {
+        _id = Guid.Empty; _revision = null; _name = ""; _url = ""; _content = "";
+        _enabled = true; _timeout = 10; _attempts = 3; _events = []; _editing = true;
+    }
+    private void Edit(DiscordSubscriptionView item)
+    {
+        _id = item.Id; _revision = item.Revision; _name = item.Name; _url = ""; _content = item.Content ?? "";
+        _enabled = item.Enabled; _timeout = item.TimeoutSeconds; _attempts = item.MaxAttempts;
+        _events = item.EventTypes.ToHashSet(StringComparer.Ordinal); _editing = true;
+    }
+    private void Cancel() { _editing = false; _url = ""; }
+    private void SelectEvent(string eventType, ChangeEventArgs args)
+    {
+        if (args.Value is true) _events.Add(eventType); else _events.Remove(eventType);
+    }
+    private void ConfirmDelete(DiscordSubscriptionView item) => _delete = item;
+    private Task SaveAsync() => RunAsync(async () =>
+    {
+        var edit = new DiscordSubscriptionEdit(_id, _name, _url, _events.ToArray(), _enabled, _content, _timeout, _attempts);
+        _url = ""; // Do not retain credentials on validation/storage failures.
+        await Administration.SaveAsync(edit, _revision, _lifetime.Token);
+        _editing = false;
+        _snapshot = await Administration.GetAsync(_lifetime.Token);
+        _message = "Subscription saved. Pending work for it was canceled.";
+    });
+    private Task DeleteAsync() => RunAsync(async () =>
+    {
+        if (_delete is not { } item) return;
+        await Administration.DeleteAsync(item.Id, item.Revision, _lifetime.Token);
+        _delete = null; Cancel();
+        _snapshot = await Administration.GetAsync(_lifetime.Token);
+        _message = "Subscription and delivery history deleted.";
+    });
+    private Task TestAsync(Guid id) => RunAsync(async () =>
+    {
+        await Administration.TestAsync(id, _lifetime.Token);
+        _snapshot = await Administration.GetAsync(_lifetime.Token);
+        _message = "Synthetic test queued. Refresh deliveries to see its outcome.";
+    });
+    private async Task RunAsync(Func<Task> action)
+    {
+        if (_busy) return;
+        _busy = true; _error = null; _message = null;
+        try { await action(); }
+        catch (OperationCanceledException) when (_lifetime.IsCancellationRequested) { }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or UnauthorizedAccessException or DiscordStateException)
+        {
+            _error = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError("Discord administration failed ({FailureType})", ex.GetType().Name);
+            _error = "Discord operation could not be confirmed. Refresh before retrying.";
+        }
+        finally { _busy = false; }
+    }
+    public void Dispose() { _url = ""; _lifetime.Cancel(); _lifetime.Dispose(); }
+}

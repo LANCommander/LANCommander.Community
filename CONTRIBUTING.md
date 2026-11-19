@@ -11,6 +11,7 @@ Current component roots are:
 - `LANCommander.Community.Server.RecompCatalog`
 - `LANCommander.Community.Server.Quake3` and its `.Core` / test projects
 - `LANCommander.Community.Launcher.MQTT`
+- `LANCommander.Community.Server.DiscordWebhook` and its test project
 
 Keep semantic plugin IDs, data IDs, configuration keys and protocol identities
 stable. A package/assembly rename is a new feed identity and needs a new version
@@ -28,6 +29,10 @@ procedures. Repository-local agent guidance is under
 [plugin maintenance](.github/skills/plugin-maintenance/SKILL.md),
 [release preparation](.github/skills/plugin-release/SKILL.md), and
 [authoring more skills](.github/skills/repository-skill-authoring/SKILL.md).
+
+The [Discord webhook plugin](plugins/Server.DiscordWebhook/README.md) owns a
+separate administrator UI and subscription queue. Tests must use fake HTTP
+handlers and synthetic credentials, never external Discord deliveries.
 
 Do not create or push release tags, publish releases, or change deployed
 identities without explicit maintainer authorization.

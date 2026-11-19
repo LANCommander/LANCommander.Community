@@ -21,6 +21,7 @@ metadata when changing a component.
 | `Server.RecompCatalog` | `plugins/Server.RecompCatalog/version.txt` | `plugins/Server.RecompCatalog/CHANGELOG.md` | `server-recompcatalog-v<version>` | `LANCommander.Community.Server.RecompCatalog.<version>.nupkg` | GitHub Packages; NuGet.org if `NUGET_API_KEY` is set |
 | `Server.Quake3` | `plugins/Server.Quake3/version.txt` | `plugins/Server.Quake3/CHANGELOG.md` | `server-quake3-v<version>` | `LANCommander.Community.Server.Quake3.<version>.nupkg` | GitHub Packages; NuGet.org if `NUGET_API_KEY` is set |
 | `Launcher.MQTT` | `plugins/Launcher.MQTT/version.txt` | `plugins/Launcher.MQTT/CHANGELOG.md` | `launcher-mqtt-v<version>` | `LANCommander.Community.Launcher.MQTT.<version>.nupkg` | GitHub Packages; NuGet.org if `NUGET_API_KEY` is set |
+| `Server.DiscordWebhook` | `plugins/Server.DiscordWebhook/version.txt` | `plugins/Server.DiscordWebhook/CHANGELOG.md` | `server-discordwebhook-v<version>` | `LANCommander.Community.Server.DiscordWebhook.<version>.nupkg` | GitHub Packages; NuGet.org if `NUGET_API_KEY` is set |
 
 Use complete SemVer in `version.txt`, including prerelease identifiers when
 applicable. The tag must contain that exact version, and the changelog must
@@ -186,7 +187,7 @@ There is one release process: the component tag workflow creates the GitHub
 Release and publishes eligible `.nupkg` components to package feeds. There are
 no separate manual feed-dispatch workflows.
 
-`eng/plugins.json` explicitly identifies feed-eligible components. All four
+`eng/plugins.json` explicitly identifies feed-eligible components. All five
 `.nupkg` components publish to GitHub Packages on every successful
 component release. NuGet.org publication is automatically attempted for those
 same components only when the repository Actions secret `NUGET_API_KEY` is
@@ -206,6 +207,7 @@ IDs, give it an expiry, and store it as the repository Actions secret named
 - `LANCommander.Community.Server.RecompCatalog`
 - `LANCommander.Community.Server.Quake3`
 - `LANCommander.Community.Launcher.MQTT`
+- `LANCommander.Community.Server.DiscordWebhook`
 
 Do not use a personal account-wide key or commit the secret. No API key,
 NuGet.org account, trusted publisher, or external service is configured by
@@ -224,10 +226,12 @@ The NuGet.org publisher has
 GitHub Release job has `contents: write`.
 `RepositoryUrl` in the plugin packages points to
 `https://github.com/LANCommander/LANCommander.Community`, linking packages to
-the repository. After a first authorized GitHub Packages publication,
-maintainers should review package visibility and repository access settings;
-new packages may default to private, and public distribution must be
-intentionally enabled in GitHub's package settings.
+the repository. Existing package metadata and released artifacts remain
+unchanged. Publication guards target only the canonical `LANCommander` owner.
+After a first authorized GitHub Packages publication, maintainers should
+review package visibility and repository access settings; new packages may
+default to private, and public distribution must be intentionally enabled in
+GitHub's package settings.
 
 ### Package discovery and eligibility
 
