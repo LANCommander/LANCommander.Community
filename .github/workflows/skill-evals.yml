@@ -47,6 +47,8 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           declare -A selected=()
           if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
@@ -81,6 +83,12 @@ jobs:
             printf '%s\n' "${eval_paths[@]}"
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
+          if [[ "$EVENT_NAME" == "pull_request" && "$HEAD_REPOSITORY" != "$GITHUB_REPOSITORY" ]]; then
+            {
+              echo "### Model-backed evals skipped for fork PR"
+              echo "Vally lint ran, but fork PRs do not receive the Copilot request permission needed for paid model sessions."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   run:
     needs: [lint, select]
@@ -105,6 +113,13 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci --no-audit --no-fund
+      - name: Explain model evaluation requirements
+        run: |
+          {
+            echo "Copilot-backed evals launch real model sessions and may use AI credits."
+            echo 'Organization-owned repositories must enable the "Allow use of Copilot CLI billed to the organization" policy.'
+            echo "Model-backed PR evals run only for same-repository PRs; fork PRs get static Vally lint only."
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Run selected skill evals
         shell: bash
         env:
