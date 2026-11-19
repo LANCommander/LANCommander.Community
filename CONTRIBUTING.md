@@ -1,14 +1,20 @@
 # Contributing
 
-Use the component-focused project and namespace hierarchy:
+Use `LANCommander.Community.<Server|Launcher>.<Name>` for every installable
+entry project, `PackageId`, `AssemblyName` and root namespace, with exact
+`LANCommander` casing and no `.Plugin` suffix. Helpers/tests may append
+`.Core`, `.Infrastructure`, `.Providers`, `.Transport` or `.Tests` (including
+more focused test suffixes) to that component root and must remain non-packable.
+Current component roots are:
 
 - `LANCommander.Community.Server.Mcp`
-- `LANCommander.Community.Server.RecompCatalog.*`
+- `LANCommander.Community.Server.RecompCatalog`
 - `LANCommander.Community.Server.Quake3` and its `.Core` / test projects
-- `LANCommander.Community.Launcher.MQTT.*`
+- `LANCommander.Community.Launcher.MQTT`
 
-Keep the historical deployed package/assembly/plugin/configuration identities
-stable unless a separately reviewed migration is explicitly authorized. Keep
+Keep semantic plugin IDs, data IDs, configuration keys and protocol identities
+stable. A package/assembly rename is a new feed identity and needs a new version
+and explicit replacement instructions; never rewrite published versions. Keep
 Home Assistant discovery as the HA-specific integration layer; Launcher.MQTT's
 command/state protocol is usable by other MQTT clients too.
 
@@ -16,7 +22,10 @@ Before submitting changes, run the repository checks and the validation
 command(s) for affected components from the root [README](README.md#build-and-validate).
 See [Plugin releases](RELEASES.md) for versioning, packaging, and release
 procedures. Repository-local agent guidance is under
-[`.github/skills`](.github/skills/): plugin maintenance,
+[`.github/skills`](.github/skills/):
+[creating server plugins](.github/skills/create-server-plugin/SKILL.md),
+[creating launcher plugins](.github/skills/create-launcher-plugin/SKILL.md),
+[plugin maintenance](.github/skills/plugin-maintenance/SKILL.md),
 [release preparation](.github/skills/plugin-release/SKILL.md), and
 [authoring more skills](.github/skills/repository-skill-authoring/SKILL.md).
 

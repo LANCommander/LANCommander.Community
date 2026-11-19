@@ -1,3 +1,16 @@
+function Assert-PluginComponentIdentity {
+    param([Parameter(Mandatory)] $Plugin)
+
+    $expected = "LANCommander.Community.$($Plugin.key)"
+    if ($Plugin.key -cnotmatch '^(Server|Launcher)\.[A-Za-z][A-Za-z0-9]*$' -or
+        $Plugin.host -cne $Plugin.key.Split('.')[0] -or
+        [IO.Path]::GetFileNameWithoutExtension($Plugin.project) -cne $expected -or
+        $Plugin.packageId -cne $expected -or $Plugin.assemblyName -cne $expected -or
+        $Plugin.rootNamespace -cne $expected) {
+        throw "Component '$($Plugin.key)' must use '$expected' for its entry project, package, assembly and namespace (no .Plugin suffix)."
+    }
+}
+
 function Get-PluginRegistry {
     $path = Join-Path (Split-Path $PSScriptRoot -Parent) 'eng\plugins.json'
     $registry = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
@@ -8,6 +21,9 @@ function Get-PluginRegistry {
     $keys = @($registry.plugins | ForEach-Object key)
     if (@($keys | Select-Object -Unique).Count -ne $keys.Count) {
         throw 'Plugin registry contains duplicate keys.'
+    }
+    foreach ($plugin in $registry.plugins) {
+        Assert-PluginComponentIdentity $plugin
     }
     return $registry.plugins
 }
@@ -139,4 +155,4 @@ function Resolve-PluginSelection {
     return @($selected.ToArray())
 }
 
-Export-ModuleMember -Function Assert-ReleaseSourceCheckout, Assert-ReleaseWorkflowContext, Get-PluginRegistry, Get-PluginVersion, Resolve-PluginSelection, Test-PluginSemVer
+Export-ModuleMember -Function Assert-PluginComponentIdentity, Assert-ReleaseSourceCheckout, Assert-ReleaseWorkflowContext, Get-PluginRegistry, Get-PluginVersion, Resolve-PluginSelection, Test-PluginSemVer

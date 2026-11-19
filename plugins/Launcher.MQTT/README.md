@@ -5,12 +5,12 @@ A Windows LANCommander GUI Launcher plugin that publishes bounded command/state 
 The source projects and namespaces use
 `LANCommander.Community.Launcher.MQTT.*`; the deployed assemblies and plugin
 folder now use their project names, including
-`Plugins/LANCommander.Community.Launcher.MQTT.Plugin`. The persistent plugin ID
-and `homeassistant.json` configuration identity remain unchanged. Version 0.2.1
-is the first NuGet release, following the original 0.2.0 ZIP prototype; the
-published ZIP and tag remain unchanged.
+`Plugins/LANCommander.Community.Launcher.MQTT`. The persistent plugin ID
+and `homeassistant.json` configuration identity remain unchanged. Version 0.2.2
+removes `.Plugin` from the package/project/assembly identity. The published
+`.Plugin` 0.2.1 NuGet and 0.2.0 ZIP releases and tags remain unchanged.
 
-## Current version (0.2.1)
+## Current version (0.2.2)
 
 Open **Launcher settings > Home Assistant MQTT** to configure broker address/port,
 username, masked password, optional TLS, stable client ID and topic prefix.
@@ -98,7 +98,7 @@ and bounded reconnect/replay behavior. Only Home Assistant discovery uses the
 ## Install / upgrade
 
 The release artifact is now a real
-`LANCommander.Community.Launcher.MQTT.Plugin.<version>.nupkg`, not a ZIP wrapped
+`LANCommander.Community.Launcher.MQTT.<version>.nupkg`, not a ZIP wrapped
 in NuGet. Its package types are `LANCommander.Plugin` and
 `LANCommander.Plugin.Launcher`. The full private runtime payload is under
 `lib/net10.0`; dependencies supplied by the host are excluded. Search tags
@@ -114,31 +114,41 @@ Installation is staged until restart. Releases use GitHub Packages automatically
 NuGet.org is used only if the release workflow has `NUGET_API_KEY`.
 Feed visibility/authentication is configured by the user/maintainer, not this
 plugin. The existing 0.2.0 ZIP is immutable and is not retroactively published
-as NuGet. Version 0.2.1 uses the beta.4 host baseline.
+as NuGet. Versions 0.2.1 and 0.2.2 use the beta.4 host baseline.
 
-**Existing ZIP installations require preparation before a NuGet upgrade.**
-The host updater replaces the plugin folder and preserves **only `Data`**.
-The new plugin cannot rescue root files after the installer has removed them.
+**Replacing the old identity requires a stopped-host data transfer.**
+`LANCommander.Community.Launcher.MQTT.Plugin` 0.2.1 was already published.
+Version 0.2.2 is a new feed ID, not an update to that package. The updater
+preserves **only `Data` within the same package folder**, not across IDs.
+Existing ZIP installations also require preparation; the new plugin cannot
+rescue root files after an installer removes them.
 
 1. Exit the Launcher completely. Find its existing data/config root (not
    necessarily the executable directory) and back up the entire installed
    MQTT plugin folder to a secure location outside `Plugins`.
-2. In `Plugins\LANCommander.Community.Launcher.MQTT.Plugin`, create `Data`.
+2. In the **old** plugin folder (normally
+   `Plugins\LANCommander.Community.Launcher.MQTT.Plugin`, or
+   `Plugins\LanCommander.HomeAssistant.Plugin` for the older prototype), create `Data`.
    Move your populated `homeassistant.json` and `discovery-topics.json` into
    `Data` before reopening the Launcher or staging installation. If either
    destination already exists, back up both copies and reconcile them;
    never overwrite settings or the owned-topic journal blindly.
-3. If the old folder is `Plugins\LanCommander.HomeAssistant.Plugin`, with the
-   Launcher stopped, rename **only that folder** to
-   `LANCommander.Community.Launcher.MQTT.Plugin` after preparing `Data`. If
-   the destination also exists, stop and reconcile the duplicate installations
-   from backups rather than loading both. Leave other plugin folders untouched.
+3. Keep the secured backup including `Data`, then remove the old plugin folder
+   from `Plugins` with the Launcher stopped. Do not copy/rename the old entry
+   DLL into the new folder: only the new entry assembly may be loaded.
+   If the new folder already exists, stop and reconcile duplicates from backups.
+   Leave other plugin folders untouched.
 4. Open the Launcher, install the `.nupkg` through its plugin manager, then
-   restart. Check the same broker, client ID/topic prefix, exposed games and
-   retained discovery. Do not use uninstall/reinstall to upgrade: uninstall
-   deletes `Data` too.
+   stop the Launcher completely again before activation and restore the saved
+   `Data` under `Plugins\LANCommander.Community.Launcher.MQTT\Data`. Reconcile
+   existing files instead of overwriting them blindly. Restart and check that
+   only one MQTT plugin is loaded, with the same broker, client ID/topic prefix,
+   exposed games and retained discovery. Uninstall deletes `Data` too; do not
+   use it as a substitute for backup and transfer.
 
-Normal subsequent NuGet upgrades preserve `Data/homeassistant.json` and
+For rollback, stop the Launcher and restore the old folder and backup instead
+of loading both identities. No automatic cross-ID migration is provided.
+Normal subsequent upgrades of the canonical NuGet ID preserve `Data/homeassistant.json` and
 `Data/discovery-topics.json`. The plugin also moves legacy root files into
 `Data` when started after a manual drop-in update, but fails visibly if both
 copies exist. This fallback does **not** replace preparation before the first
@@ -147,13 +157,13 @@ settings UI or copy it to `Data/homeassistant.json` for manual configuration.
 
 For manual installation without the manager, extract **only** the contents
 of `lib/net10.0` to
-`<Launcher data root>\Plugins\LANCommander.Community.Launcher.MQTT.Plugin`
+`<Launcher data root>\Plugins\LANCommander.Community.Launcher.MQTT`
 while the Launcher is stopped. Preserve its `Data` directory; do not copy the
 whole archive, `lib` wrapper, or any host DLLs into `Plugins`.
 
 ## Configure and build the source-pinned plugin
 
-1. Install through the Launcher plugin manager (see above and the [test guide](examples/TEST-GUIDE.md)), restart the GUI and configure it in Launcher settings. Alternatively copy `src\LANCommander.Community.Launcher.MQTT.Plugin\homeassistant.example.json` to the plugin's `Data/homeassistant.json` and fill it in locally. `ExposureMode` is `"selected"` (default; `Favorites` is the UUID/title allowlist, now unlimited) or `"all"` (the authenticated visible library). An empty selection safely exposes no games.
+1. Install through the Launcher plugin manager (see above and the [test guide](examples/TEST-GUIDE.md)), restart the GUI and configure it in Launcher settings. Alternatively copy `src\LANCommander.Community.Launcher.MQTT\homeassistant.example.json` to the plugin's `Data/homeassistant.json` and fill it in locally. `ExposureMode` is `"selected"` (default; `Favorites` is the UUID/title allowlist, now unlimited) or `"all"` (the authenticated visible library). An empty selection safely exposes no games.
 2. Set `UseTls` to `false` for plaintext MQTT (usually port `1883`), or `true` for TLS (usually port `8883`). Use the port configured on your broker; it is not changed automatically. Certificate errors are ignored when TLS is enabled. Existing configurations must add `BrokerUsername` and `BrokerPassword`; no Credential Manager entry is read.
 3. Use the repository validation command to materialize the pinned LANCommander
    `v2.2.0-beta.4` source commit and run the core/loader/template tests:
@@ -199,7 +209,7 @@ host-loader checks against the actual artifact:
 
 ```powershell
 $env:LANCOMMANDER_SOURCE_ROOT = "C:\path\to\LANCommander"
-pwsh .\eng\Test-LauncherPackage.ps1 -PackagePath "C:\path\to\LANCommander.Community.Launcher.MQTT.Plugin.0.2.1.nupkg" -ExpectedVersion 0.2.1
+pwsh .\eng\Test-LauncherPackage.ps1 -PackagePath "C:\path\to\LANCommander.Community.Launcher.MQTT.0.2.2.nupkg" -ExpectedVersion 0.2.2
 ```
 
 To render the discovery template exported by the **actual packaged assembly** and
@@ -208,7 +218,7 @@ packages in `tests\ha-template-requirements.txt`):
 
 ```powershell
 $env:LANCOMMANDER_HA_TEMPLATE_EXPORT = Join-Path $env:TEMP "lancommander-ha-discovery.json"
-pwsh .\eng\Test-LauncherPackage.ps1 -PackagePath "C:\path\to\LANCommander.Community.Launcher.MQTT.Plugin.0.2.1.nupkg" -ExpectedVersion 0.2.1
+pwsh .\eng\Test-LauncherPackage.ps1 -PackagePath "C:\path\to\LANCommander.Community.Launcher.MQTT.0.2.2.nupkg" -ExpectedVersion 0.2.2
 python plugins\Launcher.MQTT\tools\Test-HaTemplates.py "$env:LANCOMMANDER_HA_TEMPLATE_EXPORT" --script plugins\Launcher.MQTT\examples\home-assistant-launch-game.yaml
 ```
 

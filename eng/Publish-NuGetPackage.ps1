@@ -117,7 +117,7 @@ if ([string]::IsNullOrWhiteSpace($env:NUGET_API_KEY)) {
     throw 'NuGet publication was explicitly requested, but NUGET_API_KEY is missing.'
 }
 Assert-ReleaseWorkflowContext -Tag $Tag -Repository $env:GITHUB_REPOSITORY `
-    -ExpectedRepository 'aaronpowell/LANCommander.Community' -Actions $env:GITHUB_ACTIONS `
+    -ExpectedRepository 'LANCommander/LANCommander.Community' -Actions $env:GITHUB_ACTIONS `
     -EventName $env:GITHUB_EVENT_NAME -Ref $env:GITHUB_REF
 
 $headCommit = (& git -C $repositoryRoot rev-parse HEAD).Trim()

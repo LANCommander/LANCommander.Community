@@ -52,6 +52,8 @@ focused build, test, and installation instructions.
 - [Plugin release procedure](RELEASES.md) — versioning, validation, and
   component release workflow.
 - [Repository agent skills](.github/skills/) — focused `SKILL.md` guidance for
+  [creating server plugins](.github/skills/create-server-plugin/SKILL.md),
+  [creating launcher plugins](.github/skills/create-launcher-plugin/SKILL.md),
   plugin maintenance, release preparation, and authoring more skills.
 
 The community repository is independent and is not an official LANCommander

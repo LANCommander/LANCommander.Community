@@ -1,6 +1,6 @@
 using LANCommander.Community.Server.RecompCatalog.Core;
 
-namespace LANCommander.Community.Server.RecompCatalog.Plugin;
+namespace LANCommander.Community.Server.RecompCatalog;
 
 internal sealed class CatalogImportGate : IDisposable
 {

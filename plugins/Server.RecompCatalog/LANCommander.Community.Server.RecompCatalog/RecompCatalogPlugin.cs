@@ -1,7 +1,7 @@
 using System.Reflection;
 using LANCommander.Community.Server.RecompCatalog.Core;
 using LANCommander.Community.Server.RecompCatalog.Infrastructure;
-using LANCommander.Community.Server.RecompCatalog.Plugin;
+using LANCommander.Community.Server.RecompCatalog;
 using LANCommander.Community.Server.RecompCatalog.Providers;
 using LANCommander.SDK.Plugins;
 using LANCommander.Server.Plugins;
@@ -15,7 +15,7 @@ using Microsoft.Extensions.Logging;
     MinHostVersion = "2.2.0-beta.4",
     Hosts = PluginHost.Server)]
 
-namespace LANCommander.Community.Server.RecompCatalog.Plugin;
+namespace LANCommander.Community.Server.RecompCatalog;
 
 /// <summary>
 /// Server plugin entry point for browsing compatible recompilation catalogs and importing

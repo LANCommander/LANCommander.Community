@@ -52,8 +52,8 @@ if ($component.artifactFormat -cne 'nupkg' -or $component.githubPackagesEligible
     throw "$Plugin does not produce a GitHub Packages-eligible NuGet package."
 }
 if ($Owner -notmatch '^[A-Za-z0-9-]+$' -or
-    $Repository -cne 'aaronpowell/LANCommander.Community' -or $Owner -cne 'aaronpowell') {
-    throw 'GitHub Packages publication is restricted to the canonical aaronpowell/LANCommander.Community repository.'
+    $Repository -cne 'LANCommander/LANCommander.Community' -or $Owner -cne 'LANCommander') {
+    throw 'GitHub Packages publication is restricted to the canonical LANCommander/LANCommander.Community repository.'
 }
 
 $artifactRoot = [IO.Path]::GetFullPath($ArtifactDirectory)

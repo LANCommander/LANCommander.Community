@@ -1,5 +1,5 @@
 using LANCommander.Community.Server.RecompCatalog.Core;
-using LANCommander.Community.Server.RecompCatalog.Plugin;
+using LANCommander.Community.Server.RecompCatalog;
 using LANCommander.Server.Plugins;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

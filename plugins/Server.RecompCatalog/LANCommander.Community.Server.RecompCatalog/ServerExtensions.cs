@@ -1,7 +1,7 @@
 using System.Reflection;
 using LANCommander.Server.Plugins;
 
-namespace LANCommander.Community.Server.RecompCatalog.Plugin;
+namespace LANCommander.Community.Server.RecompCatalog;
 
 /// <summary>Exposes this assembly's routable Razor components to the server's router.</summary>
 internal sealed record RecompCatalogRouteAssemblyExtension(Assembly Assembly) : IServerRouteAssemblyExtension;

@@ -23,7 +23,7 @@
     <ProjectReference Include="$(LANCommanderSourceRoot)\LANCommander.Launcher.Services\LANCommander.Launcher.Services.csproj" />
     <ProjectReference Include="$(LANCommanderSourceRoot)\LANCommander.Launcher.Models\LANCommander.Launcher.Models.csproj" />
     <ProjectReference Include="$(LANCommanderSourceRoot)\LANCommander.PluginManagement\LANCommander.PluginManagement.csproj" />
-    <ProjectReference Include="..\..\src\LANCommander.Community.Launcher.MQTT.Plugin\LANCommander.Community.Launcher.MQTT.Plugin.csproj" />
+    <ProjectReference Include="..\..\src\LANCommander.Community.Launcher.MQTT\LANCommander.Community.Launcher.MQTT.csproj" />
   </ItemGroup>
   <Target Name="RequireLANCommanderSourceRoot" BeforeTargets="PrepareForBuild" Condition="'$(LANCommanderSourceRoot)' == ''">
     <Error Text="Set LANCommanderSourceRoot (or LANCOMMANDER_SOURCE_ROOT) to a LANCommander v2.2.0-beta.4 source checkout to run loader identity tests." />

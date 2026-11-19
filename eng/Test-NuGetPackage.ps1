@@ -64,7 +64,7 @@ try {
         $repositoryElement = $metadataFields['repository']
         $repositoryUrl = if ($repositoryElement) { $repositoryElement.Attribute('url') }
         if (-not $repositoryUrl -or
-            [string]$repositoryUrl.Value -cne 'https://github.com/aaronpowell/LANCommander.Community') {
+            [string]$repositoryUrl.Value -cne 'https://github.com/LANCommander/LANCommander.Community') {
             throw "Package $($package.Name) must identify the canonical LANCommander.Community repository."
         }
     }

@@ -40,7 +40,7 @@ public static class HomeAssistantDiscovery
         {
             name = "LANCommander Home Assistant plugin",
             sw = PluginVersion,
-            url = "https://github.com/aaronpowell/LANCommander.Community/tree/main/plugins/Launcher.MQTT"
+            url = "https://github.com/LANCommander/LANCommander.Community/tree/main/plugins/Launcher.MQTT"
         };
         var availabilityTopic = $"{topicPrefix}/availability";
         var stateTopic = $"{topicPrefix}/state";

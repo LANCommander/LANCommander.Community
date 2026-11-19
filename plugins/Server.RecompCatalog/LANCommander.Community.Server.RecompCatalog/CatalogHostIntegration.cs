@@ -3,7 +3,7 @@ using LANCommander.Server.Plugins;
 using System.Text.Json;
 using ManifestGame = LANCommander.SDK.Models.Manifest.Game;
 
-namespace LANCommander.Community.Server.RecompCatalog.Plugin;
+namespace LANCommander.Community.Server.RecompCatalog;
 
 public interface ICatalogHostIntegration
 {

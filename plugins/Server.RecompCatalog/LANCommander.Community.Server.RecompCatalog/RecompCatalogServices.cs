@@ -2,7 +2,7 @@ using LANCommander.Community.Server.RecompCatalog.Core;
 using LANCommander.Community.Server.RecompCatalog.Infrastructure;
 using Microsoft.Extensions.Configuration;
 
-namespace LANCommander.Community.Server.RecompCatalog.Plugin;
+namespace LANCommander.Community.Server.RecompCatalog;
 
 internal sealed record RecompCatalogSettings(string? FeedUrl)
 {

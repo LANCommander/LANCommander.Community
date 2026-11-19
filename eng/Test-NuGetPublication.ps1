@@ -156,12 +156,12 @@ try {
         $skipJob -notmatch 'NUGET_API_KEY repository secret is not configured') {
         throw 'NuGet.org must be automatically selected only for eligible packages with a configured API key, or report its intentional skip; recovery uses the main publisher commit.'
     }
-    Assert-ReleaseWorkflowContext -Tag $testTag -Repository 'aaronpowell/LANCommander.Community' `
-        -ExpectedRepository 'aaronpowell/LANCommander.Community' -Actions 'true' `
+    Assert-ReleaseWorkflowContext -Tag $testTag -Repository 'LANCommander/LANCommander.Community' `
+        -ExpectedRepository 'LANCommander/LANCommander.Community' -Actions 'true' `
         -EventName 'workflow_dispatch' -Ref 'refs/heads/main'
     Assert-Fails {
-        Assert-ReleaseWorkflowContext -Tag $testTag -Repository 'aaronpowell/LANCommander.Community' `
-            -ExpectedRepository 'aaronpowell/LANCommander.Community' -Actions 'true' `
+        Assert-ReleaseWorkflowContext -Tag $testTag -Repository 'LANCommander/LANCommander.Community' `
+            -ExpectedRepository 'LANCommander/LANCommander.Community' -Actions 'true' `
             -EventName 'workflow_dispatch' -Ref 'refs/heads/feature'
     } 'main-branch recovery dispatch' 'Non-main NuGet recovery dispatch'
     Assert-ReleaseSourceCheckout -Tag $testTag -TagCommit 'abc' -HeadCommit 'abc' `

@@ -46,7 +46,8 @@ public sealed class McpHttpTests : IAsyncLifetime
         builder.Services.AddScoped(_ => _redistributables.Object);
         builder.Services.AddScoped(_ => _servers.Object);
         builder.Services.AddScoped(_ => _metadata.Object);
-        var pluginPath = Path.Combine(AppContext.BaseDirectory, "plugin", "LANCommander.Community.Server.Mcp.dll");
+        var pluginPath = Environment.GetEnvironmentVariable("LANCOMMANDER_MCP_PLUGIN_PATH")
+            ?? Path.Combine(AppContext.BaseDirectory, "plugin", "LANCommander.Community.Server.Mcp.dll");
         var loadContext = new PluginLoadContext(pluginPath);
         var assembly = loadContext.LoadFromAssemblyPath(pluginPath);
         var pluginAttribute = Assert.Single(assembly.GetCustomAttributes(typeof(LANCommanderPluginAttribute), false)

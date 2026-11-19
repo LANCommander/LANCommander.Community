@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.2
+
+- Rename the entry project, assembly and NuGet package to
+  `LANCommander.Community.Launcher.MQTT` (remove `.Plugin`); its root namespace
+  already uses that name.
+- Treat the published `.Plugin` 0.2.1 package and 0.2.0 ZIP as immutable.
+  This new feed identity requires the README's stopped-host replacement and
+  explicit transfer of `Data`; the updater does not migrate across package IDs.
+  Preserve runtime plugin ID, settings, MQTT topics/client ID and HA entities.
+- Link package metadata to the transferred LANCommander community repository.
+
 ## 0.2.1
 
 Package the launcher as `LANCommander.Community.Launcher.MQTT.Plugin`
