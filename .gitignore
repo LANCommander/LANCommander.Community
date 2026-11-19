@@ -4,6 +4,7 @@
 .cache/
 artifacts/
 evals/results/
+node_modules/
 TestResults/
 *.user
 *.suo
