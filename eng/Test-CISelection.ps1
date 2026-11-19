@@ -69,12 +69,16 @@ try {
     if ((& $fixtureScript -BaseCommit $base -HeadCommit $head) -cne $allJson) {
         throw 'Real shared-file diffs must select every component.'
     }
+    $previousExitCode = $global:LASTEXITCODE
     try {
         & $fixtureScript -BaseCommit ('0' * 40) -HeadCommit $head 2>$null
         throw 'A missing git commit was accepted.'
     }
     catch {
         if ($_.Exception.Message -notmatch 'Could not determine PR changes') { throw }
+    }
+    finally {
+        $global:LASTEXITCODE = $previousExitCode
     }
 }
 finally {
