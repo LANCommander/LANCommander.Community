@@ -1,0 +1,147 @@
+name: Skill evals
+
+on:
+  pull_request:
+    paths:
+      - .github/skills/create-launcher-plugin/**
+      - .github/skills/create-server-plugin/**
+      - .github/workflows/skill-evals.yml
+      - .vally.yaml
+      - evals/**
+      - package.json
+      - package-lock.json
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run lint
+        env:
+          VALLY_TELEMETRY_OPTOUT: '1'
+
+  select:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      eval_paths: ${{ steps.changed.outputs.eval_paths }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - id: changed
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          ENABLE_MODEL_EVALS: ${{ vars.ENABLE_SKILL_MODEL_EVALS }}
+        run: |
+          declare -A selected=()
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            selected[server]=1
+            selected[launcher]=1
+          else
+            changed_paths=$(git diff --name-only --no-renames "$BASE_SHA" HEAD)
+            while IFS= read -r path; do
+              case "$path" in
+                .github/skills/create-server-plugin/*|evals/create-server-plugin.eval.yaml)
+                  selected[server]=1
+                  ;;
+                .github/skills/create-launcher-plugin/*|evals/create-launcher-plugin.eval.yaml)
+                  selected[launcher]=1
+                  ;;
+                .vally.yaml|.github/workflows/skill-evals.yml|package.json|package-lock.json)
+                  selected[server]=1
+                  selected[launcher]=1
+                  ;;
+              esac
+            done <<< "$changed_paths"
+          fi
+
+          eval_paths=()
+          if [[ -n "${selected[server]:-}" ]]; then
+            eval_paths+=(evals/create-server-plugin.eval.yaml)
+          fi
+          if [[ -n "${selected[launcher]:-}" ]]; then
+            eval_paths+=(evals/create-launcher-plugin.eval.yaml)
+          fi
+          {
+            echo "eval_paths<<EOF"
+            printf '%s\n' "${eval_paths[@]}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          reason=''
+          if [[ "$EVENT_NAME" == "pull_request" && "$HEAD_REPOSITORY" != "$GITHUB_REPOSITORY" ]]; then
+            reason='Model-backed evals are never run on fork PRs.'
+          elif [[ "$EVENT_NAME" == "pull_request" && "${ENABLE_MODEL_EVALS,,}" != "true" ]]; then
+            reason='Automatic model-backed evals are disabled. After the organization enables Copilot CLI billing, set the repository Actions variable ENABLE_SKILL_MODEL_EVALS to true to opt in on same-repository PRs.'
+          elif [[ ${#eval_paths[@]} -eq 0 ]]; then
+            reason='No affected eval specs were selected.'
+          fi
+          if [[ -n "$reason" ]]; then
+            {
+              echo '### Model-backed evals not run'
+              echo "$reason"
+              echo 'The lint check validates eval specs only; it does not verify skill behavior.'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  run:
+    needs: [lint, select]
+    if: >-
+      needs.select.outputs.eval_paths != '' &&
+      (github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      vars.ENABLE_SKILL_MODEL_EVALS == 'true'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      copilot-requests: write
+    env:
+      COPILOT_CLI_PATH: ${{ github.workspace }}/node_modules/@github/copilot/npm-loader.js
+      VALLY_TELEMETRY_OPTOUT: '1'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Explain model evaluation requirements
+        run: |
+          {
+            echo "Copilot-backed evals launch real model sessions and may use AI credits."
+            echo 'Organization-owned repositories must enable the "Allow use of Copilot CLI billed to the organization" policy.'
+            echo "Model-backed eval failures, including authentication and billing errors, fail this job."
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Run selected skill evals
+        shell: bash
+        env:
+          EVAL_PATHS: ${{ needs.select.outputs.eval_paths }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          while IFS= read -r eval_path; do
+            [[ -n "$eval_path" ]] || continue
+            npm run eval -- --eval-spec "$eval_path" --require-pass --max-retries 0
+          done <<< "$EVAL_PATHS"

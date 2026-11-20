@@ -35,9 +35,12 @@ packaging/storage, not a requirement to add MQTT or Home Assistant.
    Let SDK defaults derive `PackageId`, `AssemblyName` and `RootNamespace`
    from the filename. Put host-independent logic and transports
    in suffixed helper projects only when needed; keep helpers/tests non-packable.
-4. Follow MQTT's component `Directory.Build.props` import/version-file pattern.
-   Use central dependency versions, initial independent full SemVer, matching
-   non-empty changelog, README and required license/third-party notices.
+4. Add the component `Directory.Build.props` importing
+   `plugins\Directory.Build.props`. Shared plugin defaults load the component's
+   `version.txt` for `Version`/`PackageVersion`; don't duplicate that logic in
+   each component. Use central dependency versions, initial independent full
+   SemVer, matching non-empty changelog, README and required
+   license/third-party notices.
 
 ## Implement the launcher boundary
 
@@ -69,14 +72,14 @@ packaging/storage, not a requirement to add MQTT or Home Assistant.
 
 ## Register and validate the deliverable
 
-Add the solution entry, registry project/tests/identities/host bounds/version and
-independent tag prefix, artifact format and explicit feed eligibility. Update
-all explicit allowlists/counts in `eng\PluginRelease.psm1`,
-`eng\Build-Plugin.ps1`, `eng\Validate-Plugin.ps1`, `eng\Test-NuGetPackage.ps1`,
-repository/selection/destination/publication tests, and CI/release matrices,
-dispatch options, tag filters and component jobs. Update root navigation and
-release documentation. Do not copy MQTT-specific HA/template validation into a
-generic launcher component.
+Add the solution entry and `eng\plugins.json` registry entry with project/tests,
+identities, host bounds, version file, independent tag prefix, artifact format
+and explicit feed eligibility. CI and release selection derive from this
+registry; don't copy redundant allowlists or component counts into release
+scripts and workflows. Inspect component-specific tests and workflow
+conditions, adding only cases the registry-driven path does not cover. Update
+root navigation and release documentation. Do not copy MQTT-specific
+HA/template validation into a generic launcher component.
 
 Add focused host-independent tests and source-pinned host-loader tests. Adapt
 [Test-LauncherPackage.ps1](../../../eng/Test-LauncherPackage.ps1) and

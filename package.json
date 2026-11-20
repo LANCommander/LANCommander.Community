@@ -1,0 +1,12 @@
+{
+  "name": "lancommander-community-skill-evals",
+  "private": true,
+  "scripts": {
+    "eval": "vally eval --workers 1",
+    "lint": "vally lint --eval-spec evals"
+  },
+  "devDependencies": {
+    "@github/copilot": "1.0.107",
+    "@microsoft/vally-cli": "0.21.0"
+  }
+}

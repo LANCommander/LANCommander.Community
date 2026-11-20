@@ -1,0 +1,70 @@
+name: create-launcher-plugin
+description: Checks launcher-plugin creation routing and host-integration guardrails.
+type: capability
+
+defaults:
+  executor: copilot-sdk
+  model: claude-haiku-5.5
+  timeout: 5m
+  runs: 1
+
+agent_environment: create-launcher-plugin
+
+stimuli:
+  - name: blocks-unverified-launcher-contract
+    prompt: >-
+      I want to start a new launcher plugin, but this workspace has no checked-out
+      repository or pinned host source. What evidence do you need before writing
+      any code? Do not invent host APIs, storage behavior, or compatibility limits.
+    tags:
+      control: positive
+    graders:
+      - type: skill-invocation
+        config:
+          required: [create-launcher-plugin]
+      - type: output-matches
+        config:
+          pattern: "[Hh]ost|[Ss]ource|contract"
+      - type: diff-empty
+
+  - name: derives-project-identity-from-filename
+    prompt: >-
+      Start a new launcher plugin named Example by writing only its minimal
+      SDK-style entry project at
+      plugins/Launcher.Example/src/LANCommander.Community.Launcher.Example/LANCommander.Community.Launcher.Example.csproj.
+      Its assembly name and root namespace must both be
+      LANCommander.Community.Launcher.Example. Do not implement the plugin or
+      access the network; this is only an identity scaffold.
+    tags:
+      control: positive
+    graders:
+      - type: skill-invocation
+        config:
+          required: [create-launcher-plugin]
+      - type: file-exists
+        config:
+          path: plugins/Launcher.Example/src/LANCommander.Community.Launcher.Example/LANCommander.Community.Launcher.Example.csproj
+      - type: file-matches
+        config:
+          path: plugins/Launcher.Example/src/LANCommander.Community.Launcher.Example/LANCommander.Community.Launcher.Example.csproj
+          pattern: '<Project\s+Sdk\s*=\s*["'']Microsoft\.NET\.Sdk["'']'
+      - type: file-matches
+        config:
+          path: plugins/Launcher.Example/src/LANCommander.Community.Launcher.Example/LANCommander.Community.Launcher.Example.csproj
+          pattern: '<\s*(AssemblyName|RootNamespace)\b'
+          negate: true
+
+  - name: does-not-handle-existing-plugin-release
+    prompt: >-
+      How should I prepare a release update for an existing launcher plugin? I
+      am not creating a new component; answer conceptually without editing files.
+    tags:
+      control: negative
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: [create-launcher-plugin]
+      - type: diff-empty
+
+scoring:
+  threshold: 1.0
