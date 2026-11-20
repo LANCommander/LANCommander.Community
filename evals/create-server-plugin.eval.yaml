@@ -27,6 +27,33 @@ stimuli:
           pattern: "[Hh]ost|[Ss]ource|contract"
       - type: diff-empty
 
+  - name: derives-project-identity-from-filename
+    prompt: >-
+      Start a new server plugin named Example by writing only its minimal
+      SDK-style entry project at
+      plugins/Server.Example/LANCommander.Community.Server.Example/LANCommander.Community.Server.Example.csproj.
+      Its assembly name and root namespace must both be
+      LANCommander.Community.Server.Example. Do not implement the plugin or
+      access the network; this is only an identity scaffold.
+    tags:
+      control: positive
+    graders:
+      - type: skill-invocation
+        config:
+          required: [create-server-plugin]
+      - type: file-exists
+        config:
+          path: plugins/Server.Example/LANCommander.Community.Server.Example/LANCommander.Community.Server.Example.csproj
+      - type: file-matches
+        config:
+          path: plugins/Server.Example/LANCommander.Community.Server.Example/LANCommander.Community.Server.Example.csproj
+          pattern: '<Project\s+Sdk\s*=\s*["'']Microsoft\.NET\.Sdk["'']'
+      - type: file-matches
+        config:
+          path: plugins/Server.Example/LANCommander.Community.Server.Example/LANCommander.Community.Server.Example.csproj
+          pattern: '<\s*(AssemblyName|RootNamespace)\b'
+          negate: true
+
   - name: does-not-handle-existing-plugin-release
     prompt: >-
       How should I prepare a release update for an existing server plugin? I am
