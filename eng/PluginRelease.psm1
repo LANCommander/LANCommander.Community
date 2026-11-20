@@ -160,4 +160,26 @@ function Resolve-PluginSelection {
     return @($selected.ToArray())
 }
 
-Export-ModuleMember -Function Assert-PluginComponentIdentity, Assert-ReleaseSourceCheckout, Assert-ReleaseWorkflowContext, Get-PluginRegistry, Get-PluginVersion, Resolve-PluginSelection, Test-PluginSemVer
+function Get-ImpactedPlugins {
+    param([Parameter(Mandatory)][AllowEmptyCollection()][string[]] $ChangedPaths)
+
+    $registry = @(Get-PluginRegistry)
+    $selected = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    foreach ($path in $ChangedPaths) {
+        $normalized = $path.Replace('\', '/')
+        $component = @($registry | Where-Object { $normalized.StartsWith("plugins/$($_.key)/", [StringComparison]::Ordinal) })
+        if ($component.Count -eq 1) {
+            $null = $selected.Add($component[0].key)
+        }
+        elseif ($normalized -cmatch '^(README|CONTRIBUTING|RELEASES)\.md$|^\.github/skills/|^docs/') {
+            continue
+        }
+        else {
+            # Unknown paths are shared until explicitly classified, never silently skipped.
+            return @($registry | ForEach-Object key)
+        }
+    }
+    return @($registry | Where-Object { $selected.Contains($_.key) } | ForEach-Object key)
+}
+
+Export-ModuleMember -Function Assert-PluginComponentIdentity, Assert-ReleaseSourceCheckout, Assert-ReleaseWorkflowContext, Get-ImpactedPlugins, Get-PluginRegistry, Get-PluginVersion, Resolve-PluginSelection, Test-PluginSemVer
