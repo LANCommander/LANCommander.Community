@@ -1,7 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <RootNamespace>LANCommander.Community.Server.Quake3.Tests</RootNamespace>
-    <AssemblyName>LANCommander.Community.Server.Quake3.Tests</AssemblyName>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>

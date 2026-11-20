@@ -1,8 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
-    <RootNamespace>LANCommander.Community.Server.Quake3</RootNamespace>
-    <AssemblyName>LANCommander.Community.Server.Quake3</AssemblyName>
-    <PackageId>LANCommander.Community.Server.Quake3</PackageId>
     <IsPackable>true</IsPackable>
     <Description>Quake 3 Server Manager for LANCommander.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>

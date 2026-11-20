@@ -31,9 +31,9 @@ packaging/storage, not a requirement to add MQTT or Home Assistant.
    mutable checkout or fabricate NuGet adapters for missing contracts.
 3. Choose key `Launcher.<Name>` and root
    `LANCommander.Community.Launcher.<Name>`. Under `plugins\Launcher.<Name>`,
-   use `src\<root>\<root>.csproj`; directory, project basename, explicit
-   `PackageId`, `AssemblyName`, `RootNamespace` all equal the root with exact
-   casing and **no `.Plugin` suffix**. Put host-independent logic and transports
+   use `src\<root>\<root>.csproj` with exact casing and **no `.Plugin` suffix**.
+   Let SDK defaults derive `PackageId`, `AssemblyName` and `RootNamespace`
+   from the filename. Put host-independent logic and transports
    in suffixed helper projects only when needed; keep helpers/tests non-packable.
 4. Follow MQTT's component `Directory.Build.props` import/version-file pattern.
    Use central dependency versions, initial independent full SemVer, matching
