@@ -88,5 +88,24 @@ automatic comment. Commenting also depends on Actions being allowed to request
   [creating launcher plugins](.github/skills/create-launcher-plugin/SKILL.md),
   plugin maintenance, release preparation, and authoring more skills.
 
+### Skill evals
+
+The **Skill evals** workflow runs Vally spec lint on PRs that touch the
+creation skills or eval configuration, including PRs from forks. Run
+`npm ci` and `npm run lint` locally for the same static check. Lint validates
+the eval definitions; it does not exercise skill routing or grade generated
+plugin scaffolds. The workflow summary explains when model-based checks
+were not run.
+
+Model runs can use AI credits and require the organization policy
+**Allow use of Copilot CLI billed to the organization**. Once enabled,
+maintainers can manually dispatch **Skill evals** on a trusted ref to run
+all cases (the workflow must be on the default branch to be dispatchable),
+or set the repository Actions variable `ENABLE_SKILL_MODEL_EVALS` to `true`
+to run affected cases automatically on same-repository PRs. Fork PRs never
+receive model-request permissions. Keep the optional `run` job out of
+required checks; use `lint` for static validation. An opted-in model job
+fails if it cannot authenticate or complete the evals.
+
 The community repository is independent and is not an official LANCommander
 release channel.

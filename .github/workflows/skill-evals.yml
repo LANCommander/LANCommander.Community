@@ -8,6 +8,8 @@ on:
       - .github/workflows/skill-evals.yml
       - .vally.yaml
       - evals/**
+      - package.json
+      - package-lock.json
   workflow_dispatch:
 
 permissions:
@@ -49,12 +51,14 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
           GITHUB_REPOSITORY: ${{ github.repository }}
+          ENABLE_MODEL_EVALS: ${{ vars.ENABLE_SKILL_MODEL_EVALS }}
         run: |
           declare -A selected=()
           if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
             selected[server]=1
             selected[launcher]=1
           else
+            changed_paths=$(git diff --name-only --no-renames "$BASE_SHA" HEAD)
             while IFS= read -r path; do
               case "$path" in
                 .github/skills/create-server-plugin/*|evals/create-server-plugin.eval.yaml)
@@ -63,12 +67,12 @@ jobs:
                 .github/skills/create-launcher-plugin/*|evals/create-launcher-plugin.eval.yaml)
                   selected[launcher]=1
                   ;;
-                .vally.yaml|.github/workflows/skill-evals.yml)
+                .vally.yaml|.github/workflows/skill-evals.yml|package.json|package-lock.json)
                   selected[server]=1
                   selected[launcher]=1
                   ;;
               esac
-            done < <(git diff --name-only --no-renames "$BASE_SHA" HEAD)
+            done <<< "$changed_paths"
           fi
 
           eval_paths=()
@@ -83,10 +87,19 @@ jobs:
             printf '%s\n' "${eval_paths[@]}"
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
+          reason=''
           if [[ "$EVENT_NAME" == "pull_request" && "$HEAD_REPOSITORY" != "$GITHUB_REPOSITORY" ]]; then
+            reason='Model-backed evals are never run on fork PRs.'
+          elif [[ "$EVENT_NAME" == "pull_request" && "${ENABLE_MODEL_EVALS,,}" != "true" ]]; then
+            reason='Automatic model-backed evals are disabled. After the organization enables Copilot CLI billing, set the repository Actions variable ENABLE_SKILL_MODEL_EVALS to true to opt in on same-repository PRs.'
+          elif [[ ${#eval_paths[@]} -eq 0 ]]; then
+            reason='No affected eval specs were selected.'
+          fi
+          if [[ -n "$reason" ]]; then
             {
-              echo "### Model-backed evals skipped for fork PR"
-              echo "Vally lint ran, but fork PRs do not receive the Copilot request permission needed for paid model sessions."
+              echo '### Model-backed evals not run'
+              echo "$reason"
+              echo 'The lint check validates eval specs only; it does not verify skill behavior.'
             } >> "$GITHUB_STEP_SUMMARY"
           fi
 
@@ -95,7 +108,9 @@ jobs:
     if: >-
       needs.select.outputs.eval_paths != '' &&
       (github.event_name == 'workflow_dispatch' ||
-      github.event.pull_request.head.repo.full_name == github.repository)
+      (github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      vars.ENABLE_SKILL_MODEL_EVALS == 'true'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -118,7 +133,7 @@ jobs:
           {
             echo "Copilot-backed evals launch real model sessions and may use AI credits."
             echo 'Organization-owned repositories must enable the "Allow use of Copilot CLI billed to the organization" policy.'
-            echo "Model-backed PR evals run only for same-repository PRs; fork PRs get static Vally lint only."
+            echo "Model-backed eval failures, including authentication and billing errors, fail this job."
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Run selected skill evals
         shell: bash
