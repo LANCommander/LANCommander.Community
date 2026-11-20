@@ -13,6 +13,24 @@ Current component roots are:
 - `LANCommander.Community.Server.Quake3` and its `.Core` / test projects
 - `LANCommander.Community.Launcher.MQTT`
 
+## Repository layout
+
+- `plugins/<Component>/` contains one independently versioned plugin, its
+  `version.txt`, component documentation, and source and test projects. The
+  exact docs and project subdirectories vary; use the plugin README for its
+  layout and prerequisites.
+- `eng/plugins.json` is the component registry. It maps each component key to
+  its installable project and tests, and is used by the shared build,
+  validation, CI, and release-selection scripts in `eng/`.
+- `Directory.Build.props` holds shared .NET build defaults;
+  `Directory.Packages.props` centralizes NuGet versions; and
+  `plugins/Directory.Build.props` applies each component's version to its
+  projects.
+- `LANCommander.Community.slnx` is the solution for building the repository.
+- `.github/skills/` has focused contributor workflows for
+  [creating a server plugin](.github/skills/create-server-plugin/SKILL.md) and
+  [creating a launcher plugin](.github/skills/create-launcher-plugin/SKILL.md).
+
 Keep semantic plugin IDs, data IDs, configuration keys and protocol identities
 stable. A package/assembly rename is a new feed identity and needs a new version
 and explicit replacement instructions; never rewrite published versions. Keep
@@ -25,6 +43,37 @@ Shared compiler and package defaults live in the root `Directory.Build.props`.
 independent. Component-level props should contain only exceptions and import
 the shared plugin props. Do not copy shared defaults into individual projects;
 keep component-specific packaging and host runtime exclusions in their projects.
+
+## Build one plugin
+
+Install the .NET 10 SDK and PowerShell 7, then run commands from the repository
+root. Use a component key from `eng/plugins.json`; component-specific
+build prerequisites are listed in that plugin's README. The
+[validation prerequisites](RELEASES.md#prerequisites-and-validation) also cover
+extra tooling needed by component test suites.
+
+Build one installable project in Release:
+
+```powershell
+pwsh .\eng\Build-Plugin.ps1 -Plugin Server.Mcp
+```
+
+To also create and verify a local NuGet package, provide a new output directory:
+
+```powershell
+pwsh .\eng\Build-Plugin.ps1 -Plugin Server.Mcp -Package -OutputDirectory .\artifacts\server-mcp-package
+```
+
+For the focused local check, including the component's tests and package
+validation, use `Validate-Plugin.ps1` instead. Its output directory must also
+not already exist:
+
+```powershell
+pwsh .\eng\Validate-Plugin.ps1 -Plugin Server.Mcp -OutputDirectory .\artifacts\validation-mcp
+```
+
+See the root [build and validation guide](README.md#build-and-validate) for the
+full-solution build and repository checks.
 
 `eng/plugins.json` is the component allowlist used by build/validation scripts,
 the CI matrix, and release selection. New components do not need a copied CI
