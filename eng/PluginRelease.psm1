@@ -14,13 +14,18 @@ function Assert-PluginComponentIdentity {
 function Get-PluginRegistry {
     $path = Join-Path (Split-Path $PSScriptRoot -Parent) 'eng\plugins.json'
     $registry = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
-    if ($registry.schemaVersion -ne 1 -or @($registry.plugins).Count -ne 4) {
+    if ($registry.schemaVersion -ne 1 -or @($registry.plugins).Count -eq 0) {
         throw "Unsupported or incomplete plugin registry: $path"
     }
 
     $keys = @($registry.plugins | ForEach-Object key)
     if (@($keys | Select-Object -Unique).Count -ne $keys.Count) {
         throw 'Plugin registry contains duplicate keys.'
+    }
+    $prefixes = @($registry.plugins | ForEach-Object tagPrefix)
+    if (@($prefixes | Select-Object -Unique).Count -ne $prefixes.Count -or
+        @($prefixes | Where-Object { $_ -cnotmatch '^[a-z0-9]+(?:-[a-z0-9]+)*$' }).Count -gt 0) {
+        throw 'Plugin registry tag prefixes must be unique lowercase tag components.'
     }
     foreach ($plugin in $registry.plugins) {
         Assert-PluginComponentIdentity $plugin

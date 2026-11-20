@@ -1,7 +1,6 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [ValidateSet('Server.Mcp', 'Server.RecompCatalog', 'Server.Quake3', 'Launcher.MQTT')]
     [string] $Plugin,
     [Parameter(Mandatory)][string] $PackagePath,
     [Parameter(Mandatory)][string] $ExpectedVersion,
@@ -11,6 +10,7 @@ param(
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'PluginRelease.psm1') -Force
 $component = @(Get-PluginRegistry | Where-Object key -CEQ $Plugin)[0]
+if (-not $component) { throw "Unknown plugin '$Plugin'. Select only keys in eng/plugins.json." }
 if ($component.artifactFormat -cne 'nupkg') {
     throw "$Plugin does not produce a NuGet package."
 }

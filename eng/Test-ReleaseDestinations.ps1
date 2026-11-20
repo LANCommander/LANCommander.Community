@@ -15,11 +15,15 @@ function Assert-Fails {
 
 $releaseWorkflow = Get-Content -LiteralPath (Join-Path $repositoryRoot '.github/workflows/release-plugin.yml') -Raw
 $callerWorkflow = Get-Content -LiteralPath (Join-Path $repositoryRoot '.github/workflows/release.yml') -Raw
-$launcherJob = [regex]::Match($callerWorkflow, '(?ms)^  launcher-mqtt:\r?\n(?<body>.*?)(?=^  [A-Za-z0-9_-]+:|\z)').Groups['body'].Value
-if ($launcherJob -notmatch 'packages:\s+write' -or
-    $launcherJob -notmatch 'nuget_api_key:\s+\$\{\{\s*secrets\.NUGET_API_KEY\s*\}\}' -or
-    $launcherJob -notmatch 'uses:\s+\./\.github/workflows/release-plugin\.yml') {
-    throw 'Launcher releases must use the shared workflow with package permissions and optional NuGet.org key forwarding.'
+$componentJob = [regex]::Match($callerWorkflow, '(?ms)^  component-release:\r?\n(?<body>.*?)(?=^  [A-Za-z0-9_-]+:|\z)').Groups['body'].Value
+if ($componentJob -notmatch 'needs:\s+plan' -or
+    $componentJob -notmatch 'plugin:\s+\$\{\{\s*needs\.plan\.outputs\.plugin\s*\}\}' -or
+    $componentJob -notmatch 'packages:\s+write' -or
+    $componentJob -notmatch 'nuget_api_key:\s+\$\{\{\s*secrets\.NUGET_API_KEY\s*\}\}' -or
+    $componentJob -notmatch 'uses:\s+\./\.github/workflows/release-plugin\.yml' -or
+    ([regex]::Matches($callerWorkflow, 'uses:\s+\./\.github/workflows/release-plugin\.yml')).Count -ne 1 -or
+    $releaseWorkflow -notmatch 'group:\s+plugin-release-\$\{\{\s*inputs\.plugin\s*\}\}') {
+    throw 'All registered releases must use one plan-selected workflow with per-plugin concurrency, package permissions and optional NuGet.org key forwarding.'
 }
 $nugetKeyJob = [regex]::Match($releaseWorkflow, '(?ms)^  nuget-key:\r?\n(?<body>.*?)(?=^  [A-Za-z0-9_-]+:|\z)').Groups['body'].Value
 $buildJob = [regex]::Match($releaseWorkflow, '(?ms)^  build:\r?\n(?<body>.*?)(?=^  [A-Za-z0-9_-]+:|\z)').Groups['body'].Value
@@ -53,7 +57,6 @@ if ($nugetJob -notmatch 'NUGET_API_KEY:\s+\$\{\{\s*secrets\.nuget_api_key\s*\}\}
     throw 'NuGet.org must use the optional API key only in its package publishing job without an extra environment gate.'
 }
 if ($callerWorkflow -notmatch 'nuget_api_key:\s+\$\{\{\s*secrets\.NUGET_API_KEY\s*\}\}' -or
-    $callerWorkflow -notmatch 'server-quake3:' -or
     $releaseWorkflow -match '(?s)publish-nuget-org:.*?NUGET_API_KEY.*?publish-github-packages:') {
     throw 'The tag caller must pass the optional key to the reusable workflow without coupling the feeds.'
 }

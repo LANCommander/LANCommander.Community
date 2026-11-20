@@ -15,6 +15,12 @@ project and test paths, package identities, artifact formats, feed eligibility,
 and host compatibility metadata. Keep it consistent with project/package
 metadata when changing a component.
 
+The tag workflow uses a generic `*-v*` trigger and resolves the exact component
+through this registry before invoking one shared release job. Unknown tag
+prefixes fail planning; they cannot publish. Per-component concurrency is
+enforced by the reusable workflow. Release promotion, feed verification and
+original-artifact recovery still use the same checked bytes without rebuilding.
+
 | Component key | Version file | Changelog | Tag format | GitHub Release asset | NuGet feeds |
 | --- | --- | --- | --- | --- | --- |
 | `Server.Mcp` | `plugins/Server.Mcp/version.txt` | `plugins/Server.Mcp/CHANGELOG.md` | `server-mcp-v<version>` | `LANCommander.Community.Server.Mcp.<version>.nupkg` | GitHub Packages; NuGet.org if `NUGET_API_KEY` is set |

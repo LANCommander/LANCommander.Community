@@ -1,16 +1,15 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [ValidateSet('Server.Mcp', 'Server.RecompCatalog', 'Launcher.MQTT', 'Server.Quake3')]
     [string] $Plugin,
     [string] $OutputDirectory
 )
 
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = Split-Path $PSScriptRoot -Parent
-$component = @(Get-Content -LiteralPath (Join-Path $PSScriptRoot 'plugins.json') -Raw |
-    ConvertFrom-Json | Select-Object -ExpandProperty plugins | Where-Object key -CEQ $Plugin)[0]
-if (-not $component) { throw "Plugin '$Plugin' is missing from the release registry." }
+Import-Module (Join-Path $PSScriptRoot 'PluginRelease.psm1') -Force
+$null = Resolve-PluginSelection -Plugins @($Plugin)
+$component = @(Get-PluginRegistry | Where-Object key -CEQ $Plugin)[0]
 $testProjects = @($component.tests | ForEach-Object { Join-Path $repositoryRoot $_ })
 $packageOutput = if ($OutputDirectory) { $OutputDirectory } else {
     Join-Path $repositoryRoot "artifacts/validation-$($component.tagPrefix)"
