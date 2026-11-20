@@ -30,9 +30,9 @@ pipeline. Follow [CONTRIBUTING.md](../../../CONTRIBUTING.md),
 3. Use component key `Server.<Name>` and root
    `LANCommander.Community.Server.<Name>` with exact casing. Put the entry
    project below `plugins\Server.<Name>` (a `src` directory is optional, as
-   existing components demonstrate). Its directory, `.csproj` basename,
-   explicit `PackageId`, `AssemblyName` and `RootNamespace` must all equal that
-   root: **no `.Plugin` suffix**. Helpers/tests append descriptive suffixes
+   existing components demonstrate). Name its directory and `.csproj` basename
+   after that root: **no `.Plugin` suffix**. Let SDK defaults derive `PackageId`,
+   `AssemblyName` and `RootNamespace` from the filename. Helpers/tests append descriptive suffixes
    to the same root and remain non-packable.
 4. Add component `Directory.Build.props` importing the root defaults and
    reading `version.txt` for `Version`/`PackageVersion`, following Quake3.

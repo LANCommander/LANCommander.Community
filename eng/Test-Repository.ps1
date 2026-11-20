@@ -12,21 +12,6 @@ foreach ($plugin in $plugins) {
     }
 
     [xml] $pluginProjectXml = Get-Content -LiteralPath (Join-Path $repositoryRoot $plugin.project) -Raw
-    $assemblyName = $pluginProjectXml.Project.PropertyGroup.AssemblyName
-    $packageId = $pluginProjectXml.Project.PropertyGroup.PackageId
-    $rootNamespace = $pluginProjectXml.Project.PropertyGroup.RootNamespace
-    $projectName = [IO.Path]::GetFileNameWithoutExtension($plugin.project)
-    $componentName = "LANCommander.Community.$($plugin.key)"
-    if ($rootNamespace -cne $componentName) {
-        throw "$($plugin.key) entry project and root namespace must be '$componentName' (no .Plugin suffix)."
-    }
-    if ($plugin.assemblyName -cne $projectName -or $assemblyName -cne $projectName -or
-        $plugin.packageId -cne $projectName -or $packageId -cne $projectName) {
-        throw "$($plugin.key) assembly and package IDs must match its project name '$projectName'."
-    }
-    if ($rootNamespace -cne $plugin.rootNamespace -or $rootNamespace -notmatch '^LANCommander\.Community\.') {
-        throw "$($plugin.key) root namespace does not match the Community naming registry."
-    }
     $packageTypes = @(([string]$pluginProjectXml.Project.PropertyGroup.PackageType).Split(';', [StringSplitOptions]::RemoveEmptyEntries))
     $expectedTypes = @($plugin.packageTypes)
     if (@(Compare-Object $expectedTypes $packageTypes).Count -gt 0) {
@@ -60,33 +45,25 @@ foreach ($plugin in $plugins) {
 
 $allProjects = Get-ChildItem -LiteralPath (Join-Path $repositoryRoot 'plugins') -Filter '*.csproj' -File -Recurse
 foreach ($project in $allProjects) {
-    [xml] $projectXml = Get-Content -LiteralPath $project.FullName -Raw
     $projectName = [IO.Path]::GetFileNameWithoutExtension($project.Name)
-    $assemblyName = [string]$projectXml.Project.PropertyGroup.AssemblyName
-    $packageId = [string]$projectXml.Project.PropertyGroup.PackageId
     $relative = [IO.Path]::GetRelativePath((Join-Path $repositoryRoot 'plugins'), $project.FullName)
     $componentKey = ($relative -split '[/\\]')[0]
     $component = @($plugins | Where-Object key -CEQ $componentKey)
     $componentRoot = "LANCommander.Community.$componentKey"
     if ($component.Count -ne 1 -or
-        ($projectName -cne $componentRoot -and -not $projectName.StartsWith("$componentRoot.", [StringComparison]::Ordinal)) -or
-        [string]$projectXml.Project.PropertyGroup.RootNamespace -cne $projectName) {
-        throw "Project '$($project.FullName)' must use its registered component root and matching namespace."
-    }
-    if ($projectName -cne $componentRoot -and $projectXml.Project.PropertyGroup.IsPackable -eq 'true') {
-        throw "Helper/test project '$projectName' must not be packable."
-    }
-    if ($assemblyName -and $assemblyName -cne $projectName) {
-        throw "Project '$($project.FullName)' overrides AssemblyName '$assemblyName'; expected '$projectName'."
-    }
-    if ($packageId -and $packageId -cne $projectName) {
-        throw "Project '$($project.FullName)' overrides PackageId '$packageId'; expected '$projectName'."
+        ($projectName -cne $componentRoot -and -not $projectName.StartsWith("$componentRoot.", [StringComparison]::Ordinal))) {
+        throw "Project '$($project.FullName)' must use its registered component root."
     }
 
     $evaluation = & dotnet msbuild $project.FullName -nologo `
-        -getProperty:TargetFramework,ImplicitUsings,Nullable,TreatWarningsAsErrors,Version,PackageVersion,IsPackable
+        -getProperty:AssemblyName,RootNamespace,PackageId,TargetFramework,ImplicitUsings,Nullable,TreatWarningsAsErrors,Version,PackageVersion,IsPackable
     if ($LASTEXITCODE -ne 0) { throw "Could not evaluate build defaults for '$projectName'." }
     $properties = ($evaluation -join "`n" | ConvertFrom-Json).Properties
+    foreach ($identity in @('AssemblyName', 'RootNamespace', 'PackageId')) {
+        if ($properties.$identity -cne $projectName) {
+            throw "Project '$($project.FullName)' evaluates $identity to '$($properties.$identity)'; expected '$projectName'."
+        }
+    }
     $expectedVersion = Get-PluginVersion $component[0]
     if ($properties.TargetFramework -cne 'net10.0' -or
         $properties.ImplicitUsings -cne 'enable' -or $properties.Nullable -cne 'enable' -or

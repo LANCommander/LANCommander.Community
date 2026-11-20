@@ -1,8 +1,9 @@
 # Contributing
 
-Use `LANCommander.Community.<Server|Launcher>.<Name>` for every installable
-entry project, `PackageId`, `AssemblyName` and root namespace, with exact
-`LANCommander` casing and no `.Plugin` suffix. Helpers/tests may append
+Name each installable entry `.csproj` `LANCommander.Community.<Server|Launcher>.<Name>.csproj`,
+with exact `LANCommander` casing and no `.Plugin` suffix. Use the SDK defaults
+for `AssemblyName`, `RootNamespace` and `PackageId` rather than repeating the
+identity in project files or props. Helpers/tests may append
 `.Core`, `.Infrastructure`, `.Providers`, `.Transport` or `.Tests` (including
 more focused test suffixes) to that component root and must remain non-packable.
 Current component roots are:

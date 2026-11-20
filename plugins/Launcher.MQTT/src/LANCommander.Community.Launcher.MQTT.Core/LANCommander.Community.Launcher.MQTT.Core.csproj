@@ -1,6 +1,2 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <RootNamespace>LANCommander.Community.Launcher.MQTT.Core</RootNamespace>
-    <AssemblyName>LANCommander.Community.Launcher.MQTT.Core</AssemblyName>
-  </PropertyGroup>
 </Project>

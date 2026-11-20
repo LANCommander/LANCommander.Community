@@ -1,7 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <RootNamespace>LANCommander.Community.Launcher.MQTT.HostLoader.Tests</RootNamespace>
-    <AssemblyName>LANCommander.Community.Launcher.MQTT.HostLoader.Tests</AssemblyName>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <LANCommanderSourceRoot Condition="'$(LANCommanderSourceRoot)' == ''">$(LANCOMMANDER_SOURCE_ROOT)</LANCommanderSourceRoot>

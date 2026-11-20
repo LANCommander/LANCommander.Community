@@ -1,7 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <RootNamespace>LANCommander.Community.Server.Mcp.Tests</RootNamespace>
-    <AssemblyName>LANCommander.Community.Server.Mcp.Tests</AssemblyName>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>

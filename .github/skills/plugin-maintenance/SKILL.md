@@ -17,8 +17,8 @@ support it.
   project, package, assembly and root namespace, with no `.Plugin` suffix.
   Helpers/tests append suffixes to that root and stay non-packable. Use exact
   `LANCommander` casing for source-owned names.
-- Set each owned `AssemblyName` and `PackageId` to the exact current project
-  name with `LANCommander` casing; do not keep legacy pre-monorepo names as
+- Use the exact project filename to derive `AssemblyName`, `RootNamespace` and
+  `PackageId` through SDK defaults; do not keep legacy pre-monorepo names as
   active build or package outputs. Preserve semantic plugin IDs, persisted/config
   keys, MQTT topics/client identity, and HA entity identifiers. If one of
   those persistent identities must change, require an explicit

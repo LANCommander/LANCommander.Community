@@ -1,10 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
-    <RootNamespace>LANCommander.Community.Server.RecompCatalog</RootNamespace>
-    <AssemblyName>LANCommander.Community.Server.RecompCatalog</AssemblyName>
     <IsPackable>true</IsPackable>
-    <PackageId>LANCommander.Community.Server.RecompCatalog</PackageId>
     <Authors>Aaron Powell</Authors>
     <Description>Independent Quiver-compatible recompilation catalog browser and game importer for LANCommander Server.</Description>
     <PackageProjectUrl>https://github.com/LANCommander/LANCommander.Community/tree/main/plugins/Server.RecompCatalog</PackageProjectUrl>

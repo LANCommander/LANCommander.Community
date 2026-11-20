@@ -1,9 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <RootNamespace>LANCommander.Community.Server.RecompCatalog.Providers</RootNamespace>
-    <AssemblyName>LANCommander.Community.Server.RecompCatalog.Providers</AssemblyName>
-  </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\LANCommander.Community.Server.RecompCatalog.Core\LANCommander.Community.Server.RecompCatalog.Core.csproj" />

@@ -1,7 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <RootNamespace>LANCommander.Community.Launcher.MQTT.Core.Tests</RootNamespace>
-    <AssemblyName>LANCommander.Community.Launcher.MQTT.Core.Tests</AssemblyName>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>

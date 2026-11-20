@@ -1,8 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <RootNamespace>LANCommander.Community.Server.RecompCatalog.Core</RootNamespace>
-    <AssemblyName>LANCommander.Community.Server.RecompCatalog.Core</AssemblyName>
-  </PropertyGroup>
 
 </Project>

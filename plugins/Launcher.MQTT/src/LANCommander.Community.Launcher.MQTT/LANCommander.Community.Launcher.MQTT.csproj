@@ -1,8 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <RootNamespace>LANCommander.Community.Launcher.MQTT</RootNamespace>
-    <AssemblyName>LANCommander.Community.Launcher.MQTT</AssemblyName>
-    <PackageId>LANCommander.Community.Launcher.MQTT</PackageId>
     <IsPackable>true</IsPackable>
     <Description>Generic MQTT command and state integration for the LANCommander GUI Launcher, with Home Assistant discovery.</Description>
     <RepositoryUrl>https://github.com/LANCommander/LANCommander.Community</RepositoryUrl>
