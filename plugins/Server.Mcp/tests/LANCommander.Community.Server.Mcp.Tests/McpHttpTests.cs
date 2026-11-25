@@ -20,7 +20,7 @@ using Xunit;
 
 namespace LANCommander.Community.Server.Mcp.Tests;
 
-public sealed class McpHttpTests : IAsyncLifetime
+public sealed partial class McpHttpTests : IAsyncLifetime
 {
     private WebApplication _app = null!;
     private HttpClient _client = null!;
@@ -31,6 +31,13 @@ public sealed class McpHttpTests : IAsyncLifetime
     private readonly Mock<IRedistributableProvider> _redistributables = new(MockBehavior.Strict);
     private readonly Mock<IServerProvider> _servers = new(MockBehavior.Strict);
     private readonly Mock<IMetadataLookup> _metadata = new(MockBehavior.Strict);
+    private readonly Mock<IActionProvider> _actions = new(MockBehavior.Strict);
+    private readonly Mock<IScriptProvider> _scripts = new(MockBehavior.Strict);
+    private readonly Mock<ISavePathProvider> _savePaths = new(MockBehavior.Strict);
+    private readonly Mock<IMultiplayerModeProvider> _multiplayerModes = new(MockBehavior.Strict);
+    private readonly Mock<IMediaProvider> _media = new(MockBehavior.Strict);
+    private readonly Mock<IArchiveProvider> _archives = new(MockBehavior.Strict);
+    private readonly Mock<IKeyProvider> _keys = new(MockBehavior.Strict);
 
     public async Task InitializeAsync()
     {
@@ -46,6 +53,13 @@ public sealed class McpHttpTests : IAsyncLifetime
         builder.Services.AddScoped(_ => _redistributables.Object);
         builder.Services.AddScoped(_ => _servers.Object);
         builder.Services.AddScoped(_ => _metadata.Object);
+        builder.Services.AddScoped(_ => _actions.Object);
+        builder.Services.AddScoped(_ => _scripts.Object);
+        builder.Services.AddScoped(_ => _savePaths.Object);
+        builder.Services.AddScoped(_ => _multiplayerModes.Object);
+        builder.Services.AddScoped(_ => _media.Object);
+        builder.Services.AddScoped(_ => _archives.Object);
+        builder.Services.AddScoped(_ => _keys.Object);
         var pluginPath = Environment.GetEnvironmentVariable("LANCOMMANDER_MCP_PLUGIN_PATH")
             ?? Path.Combine(AppContext.BaseDirectory, "plugin", "LANCommander.Community.Server.Mcp.dll");
         var loadContext = new PluginLoadContext(pluginPath);
@@ -134,13 +148,13 @@ public sealed class McpHttpTests : IAsyncLifetime
     {
         var response = await Request("tools/list");
         var tools = response.GetProperty("result").GetProperty("tools").EnumerateArray().ToArray();
-        Assert.Equal(35, tools.Length);
+        Assert.Equal(ExpectedToolCount, tools.Length);
         Assert.Equal(tools.Length, tools.Select(x => x.GetProperty("name").GetString()).Distinct().Count());
         var read = tools.Single(x => x.GetProperty("name").GetString() == "list_games");
         Assert.True(read.GetProperty("annotations").GetProperty("readOnlyHint").GetBoolean());
         var delete = tools.Single(x => x.GetProperty("name").GetString() == "delete_game");
         Assert.True(delete.GetProperty("annotations").GetProperty("destructiveHint").GetBoolean());
-        Assert.DoesNotContain(tools, x => x.GetProperty("name").GetString()!.Contains("script"));
+        Assert.DoesNotContain(tools, x => x.GetProperty("name").GetString()!.Contains("run_script"));
         var create = tools.Single(x => x.GetProperty("name").GetString() == "create_game");
         Assert.Contains("game", create.GetProperty("inputSchema").GetProperty("properties").ToString());
     }
@@ -234,7 +248,7 @@ public sealed class McpHttpTests : IAsyncLifetime
     {
         _client.DefaultRequestHeaders.Add("Origin", "http://localhost");
         var response = await Request("tools/list");
-        Assert.Equal(35, response.GetProperty("result").GetProperty("tools").GetArrayLength());
+        Assert.Equal(ExpectedToolCount, response.GetProperty("result").GetProperty("tools").GetArrayLength());
     }
 
     [Theory]

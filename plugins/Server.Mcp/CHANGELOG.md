@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+- Add actions, scripts, save paths and multiplayer modes tools
+  (`list_*`, `get_*`, `create_*`, `update_*`, `delete_*`) using the host's
+  `IOwnedRecordProvider` contracts. Actions, scripts and save paths of a game
+  are scoped to a game version (`versionId`, or the latest version when omitted).
+- Add read-only `list_media`, `get_media`, `list_archives` and `get_archive`.
+- Add `get_key_counts`, which reports total, free and claimed CD keys without
+  exposing key values.
+- Tool calls now return the host's lookup and validation errors (for example an
+  unknown game version) and malformed arguments as tool errors with their
+  message, instead of a generic "An error occurred invoking" message. Other
+  failures still return the generic message.
+- Host packages and minimum host version are unchanged (2.2.0-beta.4).
+
 ## 0.2.3
 
 - Link package/project metadata to the transferred

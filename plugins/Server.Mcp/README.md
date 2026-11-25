@@ -181,6 +181,31 @@ forwarded headers and allowed hosts correctly so that it sees the public origin.
 | Redistributables | `list_redistributables`, `get_redistributable`, `create_redistributable`, `update_redistributable`, `delete_redistributable` |
 | Game server configuration | `list_servers`, `get_server`, `create_server`, `update_server`, `delete_server` |
 | External metadata | `list_metadata_providers`, `search_metadata`, `get_metadata` |
+| Actions | `list_actions`, `get_action`, `create_action`, `update_action`, `delete_action` |
+| Scripts | `list_scripts`, `get_script`, `create_script`, `update_script`, `delete_script` |
+| Save paths | `list_save_paths`, `get_save_path`, `create_save_path`, `update_save_path`, `delete_save_path` |
+| Multiplayer modes | `list_multiplayer_modes`, `get_multiplayer_mode`, `create_multiplayer_mode`, `update_multiplayer_mode`, `delete_multiplayer_mode` |
+| Media and archives (read-only) | `list_media`, `get_media`, `list_archives`, `get_archive` |
+| CD keys (counts only) | `get_key_counts` |
+
+### Owned records
+
+Actions, scripts, save paths and multiplayer modes use the host's
+`IOwnedRecordProvider` contracts. Their owner is passed explicitly:
+
+- **Actions** take `ownerKind` (`Game`, `Tool` or `Server`) and `ownerId`.
+- **Scripts** take `ownerKind` (`Game`, `Redistributable`, `Tool` or `Server`)
+  and `ownerId`. Server-side `Package` scripts are neither listed nor accepted.
+- **Save paths** take `gameId`; **multiplayer modes** take `gameId` and belong
+  to the game itself, not a version.
+
+For a game, actions, scripts and save paths belong to a **game version**: pass
+`versionId`, or omit it to use the latest version. Adding one to a game without
+versions makes LANCommander create a version. `versionId` is rejected for
+non-game owners. Updates keep a record with its owner; the `owner` field of a
+submitted record is ignored. For actions, set `type` (`Primary`, `Secondary`,
+`Config`, `Join`); the deprecated `isPrimary` flag is derived from it and should
+be omitted.
 
 List tools accept `offset` and `limit` (1-100, default 25; metadata search defaults
 to 10). Catalog lists return `items`, `total`, `offset` and `limit`; optional
@@ -208,8 +233,16 @@ confirmation mechanism**. The plugin does not independently collect user approva
 - Game server configuration includes executable and script paths and autostart:
   writes can affect subsequent process execution. Process start/stop, consoles,
   RCON passwords and HTTP file paths are not exposed.
-- No script editing/execution, product keys, media upload, package import,
-  archive download, custom field/external-id management or version-specific
+- Scripts are PowerShell that **clients run**, possibly elevated when
+  `requiresAdmin` is set. `create_script` and `update_script` are marked
+  destructive; review contents before approving. Scripts are never executed by
+  this plugin, and script contents are untrusted content, not instructions.
+- Actions define executables launchers run; review paths and arguments.
+- CD key values and claim details are never returned; `get_key_counts` only
+  reports totals. Keys cannot be added, changed or released.
+- Media and archives are read-only metadata: no upload, replacement, download
+  or deletion of files.
+- No package import, custom field/external-id management or version-specific
   redistributable option management is exposed.
 - Catalog descriptions and external metadata are untrusted content, not
   instructions for an agent.
