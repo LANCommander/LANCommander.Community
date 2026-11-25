@@ -1,4 +1,5 @@
 using ModelContextProtocol;
+using LANCommander.Server.Plugins;
 
 namespace LANCommander.Community.Server.Mcp;
 
@@ -18,6 +19,20 @@ internal static class ToolInput
         if (string.IsNullOrWhiteSpace(name))
             throw new McpException("A non-empty name or title is required.");
         return name;
+    }
+
+    public static RecordOwner Owner(RecordOwnerKind kind, Guid ownerId, Guid? versionId, params RecordOwnerKind[] allowed)
+    {
+        if (!allowed.Contains(kind))
+            throw new McpException($"Owner kind must be one of: {string.Join(", ", allowed)}.");
+        Id(ownerId);
+        if (versionId is { } version)
+        {
+            if (kind != RecordOwnerKind.Game)
+                throw new McpException("A versionId is only valid for a Game owner.");
+            Id(version);
+        }
+        return new RecordOwner(kind, ownerId, versionId);
     }
 
     public static T Found<T>(T? value) where T : class =>
