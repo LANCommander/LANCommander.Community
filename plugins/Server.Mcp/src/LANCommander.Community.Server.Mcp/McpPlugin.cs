@@ -31,6 +31,7 @@ public sealed class McpPlugin : IPlugin
         services.AddSingleton<IServerNavigationExtension, McpNavigation>();
         services.AddMcpServer()
             .WithHttpTransport(options => options.Stateless = true)
+            .WithRequestFilters(filters => filters.AddCallToolFilter(ToolErrors.Filter))
             .WithTools<CatalogTools>()
             .WithTools<MetadataTools>()
             .WithTools<OwnedRecordTools>()
