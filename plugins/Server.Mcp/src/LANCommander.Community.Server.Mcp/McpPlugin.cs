@@ -33,7 +33,8 @@ public sealed class McpPlugin : IPlugin
             .WithHttpTransport(options => options.Stateless = true)
             .WithTools<CatalogTools>()
             .WithTools<MetadataTools>()
-            .WithTools<OwnedRecordTools>();
+            .WithTools<OwnedRecordTools>()
+            .WithTools<AssetTools>();
     }
 
     public Task InitializeAsync(PluginContext context, CancellationToken cancellationToken)

@@ -35,6 +35,9 @@ public sealed partial class McpHttpTests : IAsyncLifetime
     private readonly Mock<IScriptProvider> _scripts = new(MockBehavior.Strict);
     private readonly Mock<ISavePathProvider> _savePaths = new(MockBehavior.Strict);
     private readonly Mock<IMultiplayerModeProvider> _multiplayerModes = new(MockBehavior.Strict);
+    private readonly Mock<IMediaProvider> _media = new(MockBehavior.Strict);
+    private readonly Mock<IArchiveProvider> _archives = new(MockBehavior.Strict);
+    private readonly Mock<IKeyProvider> _keys = new(MockBehavior.Strict);
 
     public async Task InitializeAsync()
     {
@@ -54,6 +57,9 @@ public sealed partial class McpHttpTests : IAsyncLifetime
         builder.Services.AddScoped(_ => _scripts.Object);
         builder.Services.AddScoped(_ => _savePaths.Object);
         builder.Services.AddScoped(_ => _multiplayerModes.Object);
+        builder.Services.AddScoped(_ => _media.Object);
+        builder.Services.AddScoped(_ => _archives.Object);
+        builder.Services.AddScoped(_ => _keys.Object);
         var pluginPath = Environment.GetEnvironmentVariable("LANCOMMANDER_MCP_PLUGIN_PATH")
             ?? Path.Combine(AppContext.BaseDirectory, "plugin", "LANCommander.Community.Server.Mcp.dll");
         var loadContext = new PluginLoadContext(pluginPath);
